@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\Orientation;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -34,6 +35,20 @@ class Layout extends Model
     public function slides(): HasMany
     {
         return $this->hasMany(Slide::class);
+    }
+
+    public function scopeAvailableToCustomer(Builder $query, ?int $customerId): Builder
+    {
+        return $query->where(function (Builder $layoutQuery) use ($customerId): void {
+            $layoutQuery->doesntHave('customers');
+
+            if (filled($customerId)) {
+                $layoutQuery->orWhereHas(
+                    'customers',
+                    fn (Builder $customerQuery) => $customerQuery->where('customers.id', $customerId),
+                );
+            }
+        });
     }
 
     protected static function booted(): void

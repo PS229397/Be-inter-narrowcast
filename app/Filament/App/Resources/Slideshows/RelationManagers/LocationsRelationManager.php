@@ -4,13 +4,8 @@ namespace App\Filament\App\Resources\Slideshows\RelationManagers;
 
 use Filament\Actions\AttachAction;
 use Filament\Actions\BulkActionGroup;
-use Filament\Actions\CreateAction;
-use Filament\Actions\DeleteAction;
-use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\DetachAction;
 use Filament\Actions\DetachBulkAction;
-use Filament\Actions\EditAction;
-use Filament\Forms\Components\TextInput;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
@@ -22,12 +17,7 @@ class LocationsRelationManager extends RelationManager
 
     public function form(Schema $schema): Schema
     {
-        return $schema
-            ->components([
-                TextInput::make('name')
-                    ->required()
-                    ->maxLength(255),
-            ]);
+        return $schema->components([]);
     }
 
     public function table(Table $table): Table
@@ -36,24 +26,22 @@ class LocationsRelationManager extends RelationManager
             ->recordTitleAttribute('name')
             ->columns([
                 TextColumn::make('name')
-                    ->searchable(),
-            ])
-            ->filters([
-                //
+                    ->searchable()
+                    ->sortable(),
+                TextColumn::make('orientation')
+                    ->badge(),
             ])
             ->headerActions([
-                CreateAction::make(),
-                AttachAction::make(),
+                AttachAction::make()
+                    ->preloadRecordSelect()
+                    ->recordSelectSearchColumns(['name']),
             ])
             ->recordActions([
-                EditAction::make(),
                 DetachAction::make(),
-                DeleteAction::make(),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
                     DetachBulkAction::make(),
-                    DeleteBulkAction::make(),
                 ]),
             ]);
     }

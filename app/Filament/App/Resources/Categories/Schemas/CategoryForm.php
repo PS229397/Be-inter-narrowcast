@@ -2,6 +2,8 @@
 
 namespace App\Filament\App\Resources\Categories\Schemas;
 
+use Filament\Forms\Components\TextInput;
+use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 
 class CategoryForm
@@ -10,7 +12,12 @@ class CategoryForm
     {
         return $schema
             ->components([
-                //
+                Section::make('Category Details')
+                    ->schema([
+                        TextInput::make('title')
+                            ->required()
+                            ->maxLength(255),
+                    ]),
             ]);
     }
 }

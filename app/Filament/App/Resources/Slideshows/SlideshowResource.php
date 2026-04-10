@@ -6,24 +6,41 @@ use App\Filament\App\Resources\Slideshows\Pages\CreateSlideshow;
 use App\Filament\App\Resources\Slideshows\Pages\EditSlideshow;
 use App\Filament\App\Resources\Slideshows\Pages\ListSlideshows;
 use App\Filament\App\Resources\Slideshows\Pages\ViewSlideshow;
-use App\Filament\App\Resources\Slideshows\RelationManagers\LocationsRelationManager;
 use App\Filament\App\Resources\Slideshows\RelationManagers\SlidesRelationManager;
 use App\Filament\App\Resources\Slideshows\Schemas\SlideshowForm;
 use App\Filament\App\Resources\Slideshows\Schemas\SlideshowInfolist;
 use App\Filament\App\Resources\Slideshows\Tables\SlideshowsTable;
 use App\Models\Slideshow;
 use BackedEnum;
-use Illuminate\Database\Eloquent\Builder;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
+use UnitEnum;
 
 class SlideshowResource extends Resource
 {
     protected static ?string $model = Slideshow::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+    protected static ?string $recordTitleAttribute = 'title';
+
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::PlayCircle;
+
+    public static function getNavigationGroup(): string|UnitEnum|null
+    {
+        return 'Screens';
+    }
+
+    public static function getNavigationSort(): ?int
+    {
+        return 4;
+    }
+
+    public static function getGloballySearchableAttributes(): array
+    {
+        return ['title'];
+    }
 
     public static function form(Schema $schema): Schema
     {
@@ -44,7 +61,6 @@ class SlideshowResource extends Resource
     {
         return [
             SlidesRelationManager::class,
-            LocationsRelationManager::class,
         ];
     }
 
@@ -62,5 +78,10 @@ class SlideshowResource extends Resource
     {
         return parent::getEloquentQuery()
             ->where('customer_id', auth()->user()?->customer_id);
+    }
+
+    public static function getDisplayUrl(Slideshow $record): string
+    {
+        return url('/display/' . $record->customer_id . '/' . $record->id);
     }
 }

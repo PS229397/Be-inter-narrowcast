@@ -11,17 +11,35 @@ use App\Filament\App\Resources\Categories\Schemas\CategoryInfolist;
 use App\Filament\App\Resources\Categories\Tables\CategoriesTable;
 use App\Models\Category;
 use BackedEnum;
-use Illuminate\Database\Eloquent\Builder;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
+use UnitEnum;
 
 class CategoryResource extends Resource
 {
     protected static ?string $model = Category::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+    protected static ?string $recordTitleAttribute = 'title';
+
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::Tag;
+
+    public static function getNavigationGroup(): string|UnitEnum|null
+    {
+        return 'Content';
+    }
+
+    public static function getNavigationSort(): ?int
+    {
+        return 2;
+    }
+
+    public static function getGloballySearchableAttributes(): array
+    {
+        return ['title'];
+    }
 
     public static function form(Schema $schema): Schema
     {
