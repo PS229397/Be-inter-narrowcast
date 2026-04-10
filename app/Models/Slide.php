@@ -16,6 +16,7 @@ class Slide extends Model
         'layout_id',
         'customer_id',
         'category_id',
+        'slide_content',
         'is_active',
         'start_date',
         'end_date',
@@ -25,9 +26,10 @@ class Slide extends Model
     protected function casts(): array
     {
         return [
+            'slide_content' => 'array',
             'is_active' => 'boolean',
-            'start_date' => 'datetime',
-            'end_date' => 'datetime',
+            'start_date' => 'date',
+            'end_date' => 'date',
         ];
     }
 
@@ -48,8 +50,7 @@ class Slide extends Model
 
     public function slideshows(): BelongsToMany
     {
-        return $this->belongsToMany(Slideshow::class, 'slideshow_slide')
+        return $this->belongsToMany(Slideshow::class, 'slideshow_slides')
             ->withPivot('sort_order');
     }
 }
-

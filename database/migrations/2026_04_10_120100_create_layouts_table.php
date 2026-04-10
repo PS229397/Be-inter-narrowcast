@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('title');
             $table->enum('orientation', ['landscape', 'portrait']);
-            $table->json('grid');
+            $table->json('grid')->nullable();
             $table->timestamps();
         });
     }
@@ -28,4 +28,3 @@ return new class extends Migration
         Schema::dropIfExists('layouts');
     }
 };
-

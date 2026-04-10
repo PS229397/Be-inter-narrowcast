@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('location_slideshow', function (Blueprint $table) {
+        Schema::create('slideshow_locations', function (Blueprint $table) {
             $table->id();
             $table->foreignId('location_id')->constrained()->cascadeOnDelete();
             $table->foreignId('slideshow_id')->constrained()->cascadeOnDelete();
@@ -24,7 +24,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('location_slideshow');
+        Schema::dropIfExists('slideshow_locations');
     }
 };
-
