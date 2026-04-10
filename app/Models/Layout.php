@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Enums\Orientation;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -20,8 +22,14 @@ class Layout extends Model
     protected function casts(): array
     {
         return [
+            'orientation' => Orientation::class,
             'grid' => 'array',
         ];
+    }
+
+    public function customers(): BelongsToMany
+    {
+        return $this->belongsToMany(Customer::class, 'layout_customers');
     }
 
     public function slides(): HasMany
@@ -29,9 +37,26 @@ class Layout extends Model
         return $this->hasMany(Slide::class);
     }
 
-    public function customers(): BelongsToMany
+    public function scopeAvailableToCustomer(Builder $query, ?int $customerId): Builder
     {
-        return $this->belongsToMany(Customer::class, 'layout_customer');
+        return $query->where(function (Builder $layoutQuery) use ($customerId): void {
+            $layoutQuery->doesntHave('customers');
+
+            if (filled($customerId)) {
+                $layoutQuery->orWhereHas(
+                    'customers',
+                    fn (Builder $customerQuery) => $customerQuery->where('customers.id', $customerId),
+                );
+            }
+        });
+    }
+
+    protected static function booted(): void
+    {
+        static::updating(function (self $layout): void {
+            if ($layout->isDirty('orientation')) {
+                $layout->orientation = $layout->getOriginal('orientation');
+            }
+        });
     }
 }
-

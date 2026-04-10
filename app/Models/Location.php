@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\Orientation;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -18,6 +19,13 @@ class Location extends Model
         'customer_id',
     ];
 
+    protected function casts(): array
+    {
+        return [
+            'orientation' => Orientation::class,
+        ];
+    }
+
     public function customer(): BelongsTo
     {
         return $this->belongsTo(Customer::class);
@@ -25,7 +33,6 @@ class Location extends Model
 
     public function slideshows(): BelongsToMany
     {
-        return $this->belongsToMany(Slideshow::class, 'location_slideshow');
+        return $this->belongsToMany(Slideshow::class, 'slideshow_locations');
     }
 }
-

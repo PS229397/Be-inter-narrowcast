@@ -16,6 +16,15 @@ class Category extends Model
         'customer_id',
     ];
 
+    protected static function boot(): void
+    {
+        parent::boot();
+
+        static::deleting(function (self $category): void {
+            $category->slides()->update(['category_id' => null]);
+        });
+    }
+
     public function customer(): BelongsTo
     {
         return $this->belongsTo(Customer::class);

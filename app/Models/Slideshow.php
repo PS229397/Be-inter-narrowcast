@@ -31,13 +31,12 @@ class Slideshow extends Model
 
     public function slides(): BelongsToMany
     {
-        return $this->belongsToMany(Slide::class, 'slideshow_slide')
+        return $this->belongsToMany(Slide::class, 'slideshow_slides')
             ->withPivot('sort_order');
     }
 
     public function locations(): BelongsToMany
     {
-        return $this->belongsToMany(Location::class, 'location_slideshow');
+        return $this->belongsToMany(Location::class, 'slideshow_locations');
     }
 }
-

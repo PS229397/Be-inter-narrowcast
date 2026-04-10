@@ -17,10 +17,11 @@ return new class extends Migration
             $table->foreignId('layout_id')->constrained()->cascadeOnDelete();
             $table->foreignId('customer_id')->constrained()->cascadeOnDelete();
             $table->foreignId('category_id')->nullable()->constrained()->nullOnDelete();
+            $table->json('slide_content')->nullable();
             $table->boolean('is_active')->default(true);
-            $table->dateTime('start_date')->nullable();
-            $table->dateTime('end_date')->nullable();
-            $table->unsignedInteger('duration_in_seconds')->default(0);
+            $table->date('start_date')->nullable();
+            $table->date('end_date')->nullable();
+            $table->unsignedInteger('duration_in_seconds')->default(10);
             $table->timestamps();
         });
     }
@@ -33,4 +34,3 @@ return new class extends Migration
         Schema::dropIfExists('slides');
     }
 };
-

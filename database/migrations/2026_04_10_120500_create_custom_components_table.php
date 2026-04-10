@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('title');
             $table->foreignId('customer_id')->constrained()->cascadeOnDelete();
-            $table->text('blade');
+            $table->text('blade')->nullable();
             $table->text('php')->nullable();
             $table->text('scss')->nullable();
             $table->text('js')->nullable();
@@ -31,4 +31,3 @@ return new class extends Migration
         Schema::dropIfExists('custom_components');
     }
 };
-

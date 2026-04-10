@@ -47,7 +47,6 @@ class Customer extends Model
 
     public function layouts(): BelongsToMany
     {
-        return $this->belongsToMany(Layout::class, 'layout_customer');
+        return $this->belongsToMany(Layout::class, 'layout_customers');
     }
 }
-
