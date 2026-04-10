@@ -8,6 +8,7 @@ use App\Filament\Admin\Resources\CustomerResource\Pages\ListCustomers;
 use App\Filament\Admin\Resources\CustomerResource\Pages\ViewCustomer;
 use App\Filament\Admin\Resources\CustomerResource\RelationManagers\UsersRelationManager;
 use App\Models\Customer;
+use App\Models\User;
 use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Actions\EditAction;
@@ -128,13 +129,13 @@ class CustomerResource extends Resource
             ->icon(Heroicon::OutlinedArrowRightOnRectangle)
             ->color('warning')
             ->requiresConfirmation()
-            ->visible(fn (Customer $record): bool => $record->users()->exists())
+            ->visible(fn (Customer $record): bool => static::getImpersonatableUser($record) instanceof User)
             ->action(function (Customer $record, $livewire): void {
-                $user = $record->users()->oldest('id')->first();
+                $user = static::getImpersonatableUser($record);
 
                 if (! $user) {
                     Notification::make()
-                        ->title('This customer does not have a user to impersonate yet.')
+                        ->title('This customer does not have an app user available for impersonation.')
                         ->danger()
                         ->send();
 
@@ -151,5 +152,13 @@ class CustomerResource extends Resource
 
                 $livewire->redirect(Filament::getPanel('app')->getUrl(), navigate: true);
             });
+    }
+
+    protected static function getImpersonatableUser(Customer $customer): ?User
+    {
+        return $customer->users()
+            ->orderBy('id')
+            ->get()
+            ->first(fn (User $user): bool => ! $user->isAdminUser());
     }
 }
