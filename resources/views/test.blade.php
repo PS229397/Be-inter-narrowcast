@@ -5,18 +5,158 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Layout Preview</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <style>
+        :root {
+            --layout-bg: #0b0b0f;
+            --layout-panel: #1c1c21;
+            --layout-panel-alt: #24242a;
+            --layout-panel-deep: #111114;
+            --layout-border: rgba(255, 255, 255, 0.08);
+            --layout-border-strong: rgba(255, 255, 255, 0.12);
+            --layout-text: #ffffff;
+            --layout-text-soft: #e4e4e7;
+            --layout-text-muted: #a1a1aa;
+            --layout-text-dim: #71717a;
+            --layout-accent: #f59e0b;
+            --layout-accent-hover: #ffb224;
+            --layout-accent-ink: #141414;
+        }
+
+        body {
+            background: var(--layout-bg) !important;
+            color: var(--layout-text);
+        }
+
+        #layout-preview > section,
+        #layout-preview > section:last-child > div {
+            background: var(--layout-panel) !important;
+            border-color: var(--layout-border) !important;
+            box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35) !important;
+        }
+
+        #layout-preview [class*="bg-slate-900"] {
+            background: var(--layout-panel) !important;
+        }
+
+        #layout-preview [class*="bg-slate-950"] {
+            background: var(--layout-panel-alt) !important;
+        }
+
+        #layout-preview [class*="border-white/10"] {
+            border-color: var(--layout-border) !important;
+        }
+
+        #layout-preview [class*="border-white/15"] {
+            border-color: var(--layout-border-strong) !important;
+        }
+
+        #canvas-stage {
+            background: var(--layout-panel-deep) !important;
+            border-color: rgba(245, 158, 11, 0.18) !important;
+            box-shadow: 0 24px 60px rgba(0, 0, 0, 0.4) !important;
+        }
+
+        #layout-preview input:not([type="range"]):not([type="file"]),
+        #layout-preview select,
+        #layout-preview textarea,
+        #layout-preview [data-component],
+        #layout-preview #btn-slice-h,
+        #layout-preview #btn-slice-v {
+            background: var(--layout-panel-alt) !important;
+            border-color: var(--layout-border-strong) !important;
+        }
+
+        #layout-preview input::placeholder,
+        #layout-preview textarea::placeholder {
+            color: var(--layout-text-dim) !important;
+        }
+
+        #layout-preview .text-slate-200 {
+            color: var(--layout-text-soft) !important;
+        }
+
+        #layout-preview .text-slate-300 {
+            color: #d4d4d8 !important;
+        }
+
+        #layout-preview .text-slate-400 {
+            color: var(--layout-text-muted) !important;
+        }
+
+        #layout-preview .text-slate-500,
+        #layout-preview .text-slate-600 {
+            color: var(--layout-text-dim) !important;
+        }
+
+        #layout-preview [data-component] {
+            color: var(--layout-text-muted) !important;
+            box-shadow: none !important;
+        }
+
+        #layout-preview [data-component]:hover,
+        #layout-preview #btn-slice-h:hover,
+        #layout-preview #btn-slice-v:hover {
+            border-color: rgba(245, 158, 11, 0.45) !important;
+            color: var(--layout-accent) !important;
+        }
+
+        #layout-preview #btn-save {
+            background: var(--layout-accent) !important;
+            border-color: var(--layout-accent) !important;
+            color: var(--layout-accent-ink) !important;
+            box-shadow: none !important;
+        }
+
+        #layout-preview #btn-save:hover {
+            background: var(--layout-accent-hover) !important;
+            border-color: var(--layout-accent-hover) !important;
+        }
+
+        #layout-preview [data-view-toggle] {
+            box-shadow: none !important;
+        }
+
+        #layout-preview [data-view-toggle][data-active="true"] {
+            background: var(--layout-accent) !important;
+            border-color: var(--layout-accent) !important;
+            color: var(--layout-accent-ink) !important;
+        }
+
+        #layout-preview [data-view-toggle][data-active="true"]:hover {
+            background: var(--layout-accent-hover) !important;
+            border-color: var(--layout-accent-hover) !important;
+        }
+
+        #layout-preview [data-view-toggle][data-active="false"] {
+            background: var(--layout-panel-alt) !important;
+            border-color: rgba(255, 255, 255, 0.7) !important;
+            color: var(--layout-accent-hover) !important;
+        }
+
+        #layout-preview [data-view-toggle][data-active="false"]:hover {
+            border-color: rgba(255, 255, 255, 0.9) !important;
+            color: #ffd089 !important;
+        }
+
+        #layout-preview #btn-delete,
+        #layout-preview #btn-delete-all,
+        #layout-preview #btn-slice-h,
+        #layout-preview #btn-slice-v {
+            box-shadow: none !important;
+        }
+    </style>
 </head>
 <body class="min-h-screen bg-slate-950 text-slate-50">
     <main
         id="layout-preview"
         class="mx-auto grid min-h-screen w-full grid-cols-1 gap-[20px] px-4 py-8 lg:py-16 xl:w-[1440px] xl:max-w-[1440px] xl:grid-cols-[var(--section-1-width)_var(--section-2-width)] xl:px-0 xl:items-center xl:justify-center"
     >
-        <section class="relative w-full rounded-xl border border-white/10 bg-slate-900 shadow-2xl shadow-cyan-950/40 xl:h-[var(--preview-height)] xl:w-[var(--section-1-width)]">
+        <section class="relative w-full rounded-xl border border-white/10 bg-slate-900 shadow-2xl shadow-amber-950/35 xl:h-[var(--preview-height)] xl:w-[var(--section-1-width)]">
             <div class="grid h-full place-items-center p-4 sm:p-5">
                 <div
                     id="canvas-stage"
                     style="max-width: var(--canvas-width); aspect-ratio: var(--canvas-width) / var(--canvas-height);"
-                    class="relative isolate w-full overflow-hidden rounded-xl border border-dashed border-cyan-400/30 bg-slate-950/70 shadow-2xl shadow-cyan-950/20 transition xl:h-[var(--canvas-height)] xl:w-[var(--canvas-width)]"
+                    class="relative isolate w-full overflow-hidden rounded-xl border border-dashed border-amber-400/30 bg-slate-950/70 shadow-2xl shadow-amber-950/20 transition xl:h-[var(--canvas-height)] xl:w-[var(--canvas-width)]"
                 >
                     <div id="grid-container" class="absolute inset-0"></div>
                 </div>
@@ -24,12 +164,12 @@
 
             <div id="canvas-overlay" class="pointer-events-none absolute bottom-5 right-5 z-20 hidden">
                 <div class="pointer-events-auto flex gap-2.5">
-                    <button id="btn-slice-h" type="button" title="Split horizontally" aria-label="Split horizontally" class="grid size-10 place-items-center rounded-lg border border-cyan-400/40 bg-slate-900/95 text-slate-100 shadow-lg shadow-slate-950/60 transition hover:border-cyan-300 hover:text-cyan-300">
+                    <button id="btn-slice-h" type="button" title="Split horizontally" aria-label="Split horizontally" class="grid size-10 place-items-center rounded-lg border border-amber-400/40 bg-slate-900/95 text-slate-100 shadow-lg shadow-slate-950/60 transition hover:border-amber-300 hover:text-amber-300">
                         <svg class="size-5" viewBox="0 0 20 20" fill="none" aria-hidden="true">
                             <path d="M3 10H17" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-dasharray="3 3" />
                         </svg>
                     </button>
-                    <button id="btn-slice-v" type="button" title="Split vertically" aria-label="Split vertically" class="grid size-10 place-items-center rounded-lg border border-cyan-400/40 bg-slate-900/95 text-slate-100 shadow-lg shadow-slate-950/60 transition hover:border-cyan-300 hover:text-cyan-300">
+                    <button id="btn-slice-v" type="button" title="Split vertically" aria-label="Split vertically" class="grid size-10 place-items-center rounded-lg border border-amber-400/40 bg-slate-900/95 text-slate-100 shadow-lg shadow-slate-950/60 transition hover:border-amber-300 hover:text-amber-300">
                         <svg class="size-5" viewBox="0 0 20 20" fill="none" aria-hidden="true">
                             <path d="M10 3V17" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-dasharray="3 3" />
                         </svg>
@@ -66,7 +206,7 @@
         </section>
 
         <section class="grid w-full gap-5 xl:h-[var(--preview-height)] xl:w-[var(--section-2-width)] xl:grid-rows-[230px_minmax(0,1fr)]">
-            <div class="rounded-xl border border-white/10 bg-slate-900 p-4 shadow-2xl shadow-cyan-950/40 sm:p-5 xl:h-[230px] xl:w-[var(--section-2-width)] xl:p-5">
+            <div class="rounded-xl border border-white/10 bg-slate-900 p-4 shadow-2xl shadow-amber-950/35 sm:p-5 xl:h-[230px] xl:w-[var(--section-2-width)] xl:p-5">
                 <div class="grid h-full grid-rows-[auto_auto_1fr] gap-5">
                     <div class="grid gap-4 sm:grid-cols-2">
                         <label class="grid gap-2">
@@ -74,14 +214,14 @@
                             <input
                                 type="text"
                                 value="Test"
-                                class="h-11 rounded-xl border border-white/10 bg-slate-950 px-4 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-cyan-400/60"
+                                class="h-11 rounded-xl border border-white/10 bg-slate-950 px-4 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-amber-400/60"
                             >
                         </label>
 
                         <label class="grid gap-2">
                             <span class="text-sm font-medium text-slate-200">Orientation</span>
                             <div class="relative">
-                                <select id="orientation-select" class="h-11 w-full appearance-none rounded-xl border border-white/10 bg-slate-950 px-4 pr-11 text-sm text-white outline-none transition focus:border-cyan-400/60">
+                                <select id="orientation-select" class="h-11 w-full appearance-none rounded-xl border border-white/10 bg-slate-950 px-4 pr-11 text-sm text-white outline-none transition focus:border-amber-400/60">
                                     <option value="landscape" selected>Landscape</option>
                                     <option value="portrait">Portrait</option>
                                 </select>
@@ -96,7 +236,7 @@
                         <label class="grid gap-2">
                             <span class="text-sm font-medium text-slate-200">Customer</span>
                             <div class="relative">
-                                <select class="h-11 w-full appearance-none rounded-xl border border-white/10 bg-slate-950 px-4 pr-11 text-sm text-white outline-none transition focus:border-cyan-400/60">
+                                <select class="h-11 w-full appearance-none rounded-xl border border-white/10 bg-slate-950 px-4 pr-11 text-sm text-white outline-none transition focus:border-amber-400/60">
                                     <option selected>All customers</option>
                                     <option>Be-interactive</option>
                                 </select>
@@ -107,7 +247,7 @@
                         </label>
 
                         <div class="flex gap-2">
-                            <button id="btn-save" type="button" class="h-11 flex-1 rounded-xl border border-cyan-400/40 bg-cyan-500/10 text-sm font-medium text-cyan-300 transition hover:border-cyan-300 hover:bg-cyan-500/20">Save</button>
+                            <button id="btn-save" type="button" class="h-11 flex-1 rounded-xl border border-amber-400/40 bg-amber-500/10 text-sm font-medium text-amber-300 transition hover:border-amber-300 hover:bg-amber-500/20">Save</button>
                             <button type="button" class="grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-red-400/30 bg-red-500/10 text-red-400 transition hover:border-red-400 hover:bg-red-500/20">
                                 <svg class="size-5" viewBox="0 0 20 20" fill="none" aria-hidden="true">
                                     <path d="M7.5 2.75H12.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
@@ -125,18 +265,18 @@
                     </p>
                 </div>
             </div>
-            <div class="h-full rounded-xl border border-white/10 bg-slate-900 p-5 shadow-2xl shadow-cyan-950/40 xl:w-[var(--section-2-width)] flex flex-col">
+            <div class="h-full rounded-xl border border-white/10 bg-slate-900 p-5 shadow-2xl shadow-amber-950/35 xl:w-[var(--section-2-width)] flex flex-col">
                 <!-- Admin panel -->
                 <div id="panel-admin" class="flex flex-col gap-4 flex-1 min-h-0 overflow-y-auto">
                     <p class="text-sm font-medium text-slate-400">Base components</p>
                     <div class="grid grid-cols-3 gap-2">
-                        <button data-component="text" type="button" class="flex aspect-square flex-col items-center justify-center gap-1.5 rounded-xl border border-white/10 bg-slate-950 text-slate-400 transition hover:border-cyan-400/40 hover:text-cyan-300">
+                        <button data-component="text" type="button" class="flex aspect-square flex-col items-center justify-center gap-1.5 rounded-xl border border-white/10 bg-slate-950 text-slate-400 transition hover:border-amber-400/40 hover:text-amber-300">
                             <svg class="size-6" viewBox="0 0 20 20" fill="none" aria-hidden="true">
                                 <path d="M5 5h10M10 5v10M7 15h6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
                             </svg>
                             <span class="text-xs">Text</span>
                         </button>
-                        <button data-component="image" type="button" class="flex aspect-square flex-col items-center justify-center gap-1.5 rounded-xl border border-white/10 bg-slate-950 text-slate-400 transition hover:border-cyan-400/40 hover:text-cyan-300">
+                        <button data-component="image" type="button" class="flex aspect-square flex-col items-center justify-center gap-1.5 rounded-xl border border-white/10 bg-slate-950 text-slate-400 transition hover:border-amber-400/40 hover:text-amber-300">
                             <svg class="size-6" viewBox="0 0 20 20" fill="none" aria-hidden="true">
                                 <rect x="2" y="4" width="16" height="12" rx="2" stroke="currentColor" stroke-width="1.5"/>
                                 <circle cx="7.5" cy="8.5" r="1.5" stroke="currentColor" stroke-width="1.5"/>
@@ -144,14 +284,14 @@
                             </svg>
                             <span class="text-xs">Image</span>
                         </button>
-                        <button data-component="video" type="button" class="flex aspect-square flex-col items-center justify-center gap-1.5 rounded-xl border border-white/10 bg-slate-950 text-slate-400 transition hover:border-cyan-400/40 hover:text-cyan-300">
+                        <button data-component="video" type="button" class="flex aspect-square flex-col items-center justify-center gap-1.5 rounded-xl border border-white/10 bg-slate-950 text-slate-400 transition hover:border-amber-400/40 hover:text-amber-300">
                             <svg class="size-6" viewBox="0 0 20 20" fill="none" aria-hidden="true">
                                 <rect x="2" y="5" width="12" height="10" rx="2" stroke="currentColor" stroke-width="1.5"/>
                                 <path d="M14 8.5l4-2v5l-4-2V8.5z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
                             </svg>
                             <span class="text-xs">Video</span>
                         </button>
-                        <button data-component="carousel" type="button" class="flex aspect-square flex-col items-center justify-center gap-1.5 rounded-xl border border-white/10 bg-slate-950 text-slate-400 transition hover:border-cyan-400/40 hover:text-cyan-300">
+                        <button data-component="carousel" type="button" class="flex aspect-square flex-col items-center justify-center gap-1.5 rounded-xl border border-white/10 bg-slate-950 text-slate-400 transition hover:border-amber-400/40 hover:text-amber-300">
                             <svg class="size-6" viewBox="0 0 20 20" fill="none" aria-hidden="true">
                                 <rect x="1" y="6" width="4" height="7" rx="1" stroke="currentColor" stroke-width="1.5" opacity="0.4"/>
                                 <rect x="6" y="3" width="8" height="11" rx="1.5" stroke="currentColor" stroke-width="1.5"/>
@@ -162,7 +302,7 @@
                             </svg>
                             <span class="text-xs">Carousel</span>
                         </button>
-                        <button data-component="ticker" type="button" class="flex aspect-square flex-col items-center justify-center gap-1.5 rounded-xl border border-white/10 bg-slate-950 text-slate-400 transition hover:border-cyan-400/40 hover:text-cyan-300">
+                        <button data-component="ticker" type="button" class="flex aspect-square flex-col items-center justify-center gap-1.5 rounded-xl border border-white/10 bg-slate-950 text-slate-400 transition hover:border-amber-400/40 hover:text-amber-300">
                             <svg class="size-6" viewBox="0 0 20 20" fill="none" aria-hidden="true">
                                 <rect x="2" y="7" width="16" height="6" rx="1.5" stroke="currentColor" stroke-width="1.5"/>
                                 <path d="M5 10h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
@@ -170,14 +310,14 @@
                             </svg>
                             <span class="text-xs">Ticker</span>
                         </button>
-                        <button data-component="clock" type="button" class="flex aspect-square flex-col items-center justify-center gap-1.5 rounded-xl border border-white/10 bg-slate-950 text-slate-400 transition hover:border-cyan-400/40 hover:text-cyan-300">
+                        <button data-component="clock" type="button" class="flex aspect-square flex-col items-center justify-center gap-1.5 rounded-xl border border-white/10 bg-slate-950 text-slate-400 transition hover:border-amber-400/40 hover:text-amber-300">
                             <svg class="size-6" viewBox="0 0 20 20" fill="none" aria-hidden="true">
                                 <circle cx="10" cy="10" r="7.5" stroke="currentColor" stroke-width="1.5"/>
                                 <path d="M10 6v4l2.5 2.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
                             </svg>
                             <span class="text-xs">Clock</span>
                         </button>
-                        <button data-component="weather" type="button" class="flex aspect-square flex-col items-center justify-center gap-1.5 rounded-xl border border-white/10 bg-slate-950 text-slate-400 transition hover:border-cyan-400/40 hover:text-cyan-300">
+                        <button data-component="weather" type="button" class="flex aspect-square flex-col items-center justify-center gap-1.5 rounded-xl border border-white/10 bg-slate-950 text-slate-400 transition hover:border-amber-400/40 hover:text-amber-300">
                             <svg class="size-6" viewBox="0 0 20 20" fill="none" aria-hidden="true">
                                 <circle cx="10" cy="8.5" r="3" stroke="currentColor" stroke-width="1.5"/>
                                 <path d="M10 3v1M10 14v1M3.5 8.5h1M15.5 8.5h1M5.6 4.6l.7.7M13.7 4.6l-.7.7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
@@ -185,7 +325,7 @@
                             </svg>
                             <span class="text-xs">Weather</span>
                         </button>
-                        <button data-component="countdown" type="button" class="flex aspect-square flex-col items-center justify-center gap-1.5 rounded-xl border border-white/10 bg-slate-950 text-slate-400 transition hover:border-cyan-400/40 hover:text-cyan-300">
+                        <button data-component="countdown" type="button" class="flex aspect-square flex-col items-center justify-center gap-1.5 rounded-xl border border-white/10 bg-slate-950 text-slate-400 transition hover:border-amber-400/40 hover:text-amber-300">
                             <svg class="size-6" viewBox="0 0 20 20" fill="none" aria-hidden="true">
                                 <circle cx="10" cy="11" r="7" stroke="currentColor" stroke-width="1.5"/>
                                 <path d="M10 8v3l-2.5 2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
@@ -193,7 +333,7 @@
                             </svg>
                             <span class="text-xs">Countdown</span>
                         </button>
-                        <button data-component="qr" type="button" class="flex aspect-square flex-col items-center justify-center gap-1.5 rounded-xl border border-white/10 bg-slate-950 text-slate-400 transition hover:border-cyan-400/40 hover:text-cyan-300">
+                        <button data-component="qr" type="button" class="flex aspect-square flex-col items-center justify-center gap-1.5 rounded-xl border border-white/10 bg-slate-950 text-slate-400 transition hover:border-amber-400/40 hover:text-amber-300">
                             <svg class="size-6" viewBox="0 0 20 20" fill="none" aria-hidden="true">
                                 <rect x="3" y="3" width="5" height="5" rx="0.5" stroke="currentColor" stroke-width="1.5"/>
                                 <rect x="12" y="3" width="5" height="5" rx="0.5" stroke="currentColor" stroke-width="1.5"/>
@@ -217,8 +357,8 @@
 
                 <!-- View toggle -->
                 <div class="mt-auto flex gap-2 pt-4 border-t border-white/10 shrink-0">
-                    <button id="btn-view-admin" type="button" class="h-9 flex-1 rounded-xl border border-cyan-400/40 bg-cyan-500/10 text-sm font-medium text-cyan-300 transition hover:bg-cyan-500/20">Admin</button>
-                    <button id="btn-view-customer" type="button" class="h-9 flex-1 rounded-xl border border-white/10 bg-slate-950 text-sm font-medium text-slate-400 transition hover:border-white/20 hover:text-slate-200">Customer</button>
+                    <button id="btn-view-admin" data-view-toggle type="button" class="h-9 flex-1 rounded-xl border border-amber-400/40 bg-amber-500/10 text-sm font-medium text-amber-300 transition hover:bg-amber-500/20">Admin</button>
+                    <button id="btn-view-customer" data-view-toggle type="button" class="h-9 flex-1 rounded-xl border border-white/10 bg-slate-950 text-sm font-medium text-slate-400 transition hover:border-white/20 hover:text-slate-200">Customer</button>
                 </div>
             </div>
         </section>
@@ -344,14 +484,14 @@
             };
 
             // --- Customer input builder ---
-            const inputClass  = 'w-full rounded-xl border border-white/10 bg-slate-950 px-4 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-cyan-400/60';
+            const inputClass  = 'w-full rounded-xl border border-white/10 bg-slate-950 px-4 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-amber-400/60';
             const labelClass  = 'text-xs font-medium text-slate-400';
             const fieldClass  = 'flex flex-col gap-1.5';
-            const selectClass = 'h-11 w-full appearance-none rounded-xl border border-white/10 bg-slate-950 px-4 text-sm text-white outline-none transition focus:border-cyan-400/60';
+            const selectClass = 'h-11 w-full appearance-none rounded-xl border border-white/10 bg-slate-950 px-4 text-sm text-white outline-none transition focus:border-amber-400/60';
 
             function buildCustomerInput(component) {
                 const uploadZone = (accept, label) => `
-                    <label class="flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-white/15 bg-slate-950 p-6 cursor-pointer transition hover:border-cyan-400/40">
+                    <label class="flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-white/15 bg-slate-950 p-6 cursor-pointer transition hover:border-amber-400/40">
                         <svg class="size-7 text-slate-500" viewBox="0 0 20 20" fill="none"><path d="M10 4v8M6 8l4-4 4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 16h14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
                         <span class="text-xs text-slate-400">${label}</span>
                         <input type="file" accept="${accept}" class="hidden">
@@ -375,19 +515,19 @@
                             <div contenteditable="true" class="p-3 text-sm text-slate-300 flex-1 outline-none min-h-[80px]"></div>
                         </div>`,
 
-                    image: `<label class="h-[80%] flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-white/15 bg-slate-950 cursor-pointer transition hover:border-cyan-400/40 min-h-[120px]">
+                    image: `<label class="h-[80%] flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-white/15 bg-slate-950 cursor-pointer transition hover:border-amber-400/40 min-h-[120px]">
                         <svg class="size-7 text-slate-500" viewBox="0 0 20 20" fill="none"><path d="M10 4v8M6 8l4-4 4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 16h14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
                         <span class="text-xs text-slate-400">Click to upload or drag & drop · PNG, JPG, WebP</span>
                         <input type="file" accept="image/*" class="hidden"></label>`,
 
-                    video: `<label class="flex-1 flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-white/15 bg-slate-950 cursor-pointer transition hover:border-cyan-400/40 min-h-[120px]">
+                    video: `<label class="flex-1 flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-white/15 bg-slate-950 cursor-pointer transition hover:border-amber-400/40 min-h-[120px]">
                         <svg class="size-7 text-slate-500" viewBox="0 0 20 20" fill="none"><path d="M10 4v8M6 8l4-4 4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 16h14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
                         <span class="text-xs text-slate-400">Click to upload or drag & drop · MP4, WebM</span>
                         <input type="file" accept="video/*" class="hidden"></label>`,
 
                     carousel: `
                         <p class="${labelClass}">Slides</p>
-                        <label class="flex-1 flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-white/15 bg-slate-950 cursor-pointer transition hover:border-cyan-400/40 min-h-[120px]">
+                        <label class="flex-1 flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-white/15 bg-slate-950 cursor-pointer transition hover:border-amber-400/40 min-h-[120px]">
                             <svg class="size-7 text-slate-500" viewBox="0 0 20 20" fill="none"><path d="M10 4v8M6 8l4-4 4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 16h14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
                             <span class="text-xs text-slate-400">Add images · PNG, JPG, WebP</span>
                             <span class="text-xs text-slate-600">Each uploaded image becomes a slide.</span>
@@ -399,7 +539,7 @@
                         <textarea placeholder="Breaking news · Type your message here..." class="${inputClass} py-3 resize-none flex-1 min-h-[80px]"></textarea>
                         <div class="${fieldClass} shrink-0">
                             <span class="${labelClass}">Speed</span>
-                            <input type="range" min="1" max="10" value="5" class="w-full accent-cyan-400">
+                            <input type="range" min="1" max="10" value="5" class="w-full accent-amber-400">
                         </div>`,
 
                     clock: `
@@ -501,9 +641,9 @@
                         ? 'box-sizing:content-box; flex:0 0 1px; padding:7px 0; margin:-7px 0; cursor:row-resize; position:relative; z-index:10; display:flex; align-items:center;'
                         : 'box-sizing:content-box; flex:0 0 1px; padding:0 7px; margin:0 -7px; cursor:col-resize; position:relative; z-index:10; display:flex; justify-content:center;';
 
-                    const dashIdle   = 'rgba(34,211,238,0.3)';
-                    const dashHover  = 'rgba(34,211,238,0.7)';
-                    const dashActive = 'rgba(34,211,238,1)';
+                    const dashIdle   = 'rgba(245,158,11,0.3)';
+                    const dashHover  = 'rgba(245,158,11,0.7)';
+                    const dashActive = 'rgba(245,158,11,1)';
                     const dashedBg = (color, dir) => dir === 'h'
                         ? `repeating-linear-gradient(to right, ${color} 0px, ${color} 4px, transparent 4px, transparent 8px)`
                         : `repeating-linear-gradient(to bottom, ${color} 0px, ${color} 4px, transparent 4px, transparent 8px)`;
@@ -586,11 +726,11 @@
                     const center = document.createElement('div');
                     center.style.cssText = 'position:absolute; inset:0; display:flex; align-items:center; justify-content:center; pointer-events:none; z-index:4; user-select:none;';
                     if (node.component && componentDefs[node.component]) {
-                        center.innerHTML = `<svg viewBox="0 0 20 20" fill="none" style="width:56px;height:56px;color:rgba(34,211,238,0.5)">${componentDefs[node.component]}</svg>`;
+                        center.innerHTML = `<svg viewBox="0 0 20 20" fill="none" style="width:56px;height:56px;color:rgba(245,158,11,0.5)">${componentDefs[node.component]}</svg>`;
                     } else {
                         center.style.fontSize   = '48px';
                         center.style.fontWeight = '700';
-                        center.style.color      = 'rgba(34,211,238,0.35)';
+                        center.style.color      = 'rgba(245,158,11,0.35)';
                         center.style.fontFamily = 'monospace';
                         center.textContent = order.get(node.id) ?? '';
                     }
@@ -607,7 +747,7 @@
                     el.style.transition      = 'background-color 0.15s';
 
                     el.addEventListener('mouseenter', () => {
-                        if (!isDragging && node.id !== selectedId) el.style.backgroundColor = 'rgba(8,145,178,0.10)';
+                        if (!isDragging && node.id !== selectedId) el.style.backgroundColor = 'rgba(245,158,11,0.10)';
                     });
                     el.addEventListener('mouseleave', () => {
                         if (!isDragging && node.id !== selectedId) el.style.backgroundColor = 'rgba(2,6,23,0.55)';
@@ -615,7 +755,7 @@
                 }
 
                 if (node.id === selectedId) {
-                    el.style.outline       = '2px solid rgba(34,211,238,0.75)';
+                    el.style.outline       = '2px solid rgba(245,158,11,0.75)';
                     el.style.outlineOffset = '-2px';
                 }
 
@@ -652,8 +792,8 @@
                 // Admin: highlight active component button
                 document.querySelectorAll('[data-component]').forEach(btn => {
                     const active = selectedNode?.component === btn.dataset.component;
-                    btn.classList.toggle('border-cyan-400/60', active);
-                    btn.classList.toggle('text-cyan-300', active);
+                    btn.classList.toggle('border-amber-400/60', active);
+                    btn.classList.toggle('text-amber-300', active);
                     btn.classList.toggle('border-white/10', !active);
                     btn.classList.toggle('text-slate-400', !active);
                 });
@@ -681,10 +821,11 @@
 
                 // View toggle button states
                 for (const [btn, active] of [[btnViewAdmin, !isCustomer], [btnViewCustomer, isCustomer]]) {
-                    btn.classList.toggle('border-cyan-400/40',  active);
-                    btn.classList.toggle('bg-cyan-500/10',      active);
-                    btn.classList.toggle('text-cyan-300',       active);
-                    btn.classList.toggle('hover:bg-cyan-500/20',active);
+                    btn.dataset.active = active ? 'true' : 'false';
+                    btn.classList.toggle('border-amber-400/40',  active);
+                    btn.classList.toggle('bg-amber-500/10',      active);
+                    btn.classList.toggle('text-amber-300',       active);
+                    btn.classList.toggle('hover:bg-amber-500/20',active);
                     btn.classList.toggle('border-white/10',    !active);
                     btn.classList.toggle('bg-slate-950',       !active);
                     btn.classList.toggle('text-slate-400',     !active);
