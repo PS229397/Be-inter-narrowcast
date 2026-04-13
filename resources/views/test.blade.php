@@ -248,9 +248,10 @@
             let nodeCounter = 0;
             const makeNode = () => ({ id: `n${++nodeCounter}`, direction: null, split: 50, children: [], component: null });
             let grid = { id: 'root', direction: null, split: 50, children: [], component: null };
-            let selectedId = null;
-            let isDragging = false;
-            let viewMode   = 'admin';
+            let selectedId       = null;
+            let isDragging      = false;
+            let viewMode        = 'admin';
+            let lastCustomerKey = null;
 
             // --- Tree helpers ---
             function findNode(node, id) {
@@ -294,6 +295,8 @@
                 if (parent.children.length === 1) {
                     const survivor    = parent.children[0];
                     parent.direction  = survivor.direction;
+                    parent.split      = survivor.split;
+                    parent.component  = survivor.component;
                     parent.children   = survivor.children;
                 }
                 selectedId = null;
@@ -628,15 +631,21 @@
                     btn.classList.toggle('text-slate-400', !active);
                 });
 
-                // Customer: update context input panel
+                // Customer: update context input panel only when selection/component changes
                 if (isCustomer) {
-                    const component = selectedNode?.children.length === 0 ? selectedNode?.component : null;
-                    const html = component
-                        ? buildCustomerInput(component)
-                        : selectedNode
-                            ? '<p class="text-sm text-slate-500">No component assigned to this section.</p>'
-                            : '<p class="text-sm text-slate-500">Select a section in the layout to edit its content.</p>';
-                    customerInput.innerHTML = `<div class="flex flex-col gap-5 h-full">${html}</div>`;
+                    const component   = selectedNode?.children.length === 0 ? selectedNode?.component : null;
+                    const customerKey = `${selectedId ?? 'none'}:${component ?? 'none'}`;
+                    if (customerKey !== lastCustomerKey) {
+                        lastCustomerKey = customerKey;
+                        const html = component
+                            ? buildCustomerInput(component)
+                            : selectedNode
+                                ? '<p class="text-sm text-slate-500">No component assigned to this section.</p>'
+                                : '<p class="text-sm text-slate-500">Select a section in the layout to edit its content.</p>';
+                        customerInput.innerHTML = `<div class="flex flex-col gap-5 h-full">${html}</div>`;
+                    }
+                } else {
+                    lastCustomerKey = null;
                 }
 
                 // Panel visibility
@@ -644,12 +653,17 @@
                 panelCustomer.classList.toggle('hidden', !isCustomer);
 
                 // View toggle button states
-                btnViewAdmin.className    = isCustomer
-                    ? 'h-9 flex-1 rounded-xl border border-white/10 bg-slate-950 text-sm font-medium text-slate-400 transition hover:border-white/20 hover:text-slate-200'
-                    : 'h-9 flex-1 rounded-xl border border-cyan-400/40 bg-cyan-500/10 text-sm font-medium text-cyan-300 transition hover:bg-cyan-500/20';
-                btnViewCustomer.className = isCustomer
-                    ? 'h-9 flex-1 rounded-xl border border-cyan-400/40 bg-cyan-500/10 text-sm font-medium text-cyan-300 transition hover:bg-cyan-500/20'
-                    : 'h-9 flex-1 rounded-xl border border-white/10 bg-slate-950 text-sm font-medium text-slate-400 transition hover:border-white/20 hover:text-slate-200';
+                for (const [btn, active] of [[btnViewAdmin, !isCustomer], [btnViewCustomer, isCustomer]]) {
+                    btn.classList.toggle('border-cyan-400/40',  active);
+                    btn.classList.toggle('bg-cyan-500/10',      active);
+                    btn.classList.toggle('text-cyan-300',       active);
+                    btn.classList.toggle('hover:bg-cyan-500/20',active);
+                    btn.classList.toggle('border-white/10',    !active);
+                    btn.classList.toggle('bg-slate-950',       !active);
+                    btn.classList.toggle('text-slate-400',     !active);
+                    btn.classList.toggle('hover:border-white/20', !active);
+                    btn.classList.toggle('hover:text-slate-200',  !active);
+                }
             }
 
             // --- Control button events ---
