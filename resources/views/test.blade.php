@@ -107,8 +107,87 @@
                     </p>
                 </div>
             </div>
-            <div class="h-full rounded-xl border border-white/10 bg-slate-900 p-6 shadow-2xl shadow-cyan-950/40 sm:p-8 xl:w-[var(--section-2-width)] xl:p-10">
-                <p>component select</p>
+            <div class="h-full rounded-xl border border-white/10 bg-slate-900 p-5 shadow-2xl shadow-cyan-950/40 xl:w-[var(--section-2-width)]">
+                <div class="flex flex-col gap-4">
+                    <p class="text-sm font-medium text-slate-400">Base components</p>
+                    <div class="grid grid-cols-3 gap-2">
+                        <button data-component="text" type="button" class="flex aspect-square flex-col items-center justify-center gap-1.5 rounded-xl border border-white/10 bg-slate-950 text-slate-400 transition hover:border-cyan-400/40 hover:text-cyan-300">
+                            <svg class="size-6" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                                <path d="M5 5h10M10 5v10M7 15h6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            <span class="text-xs">Text</span>
+                        </button>
+                        <button data-component="image" type="button" class="flex aspect-square flex-col items-center justify-center gap-1.5 rounded-xl border border-white/10 bg-slate-950 text-slate-400 transition hover:border-cyan-400/40 hover:text-cyan-300">
+                            <svg class="size-6" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                                <rect x="2" y="4" width="16" height="12" rx="2" stroke="currentColor" stroke-width="1.5"/>
+                                <circle cx="7.5" cy="8.5" r="1.5" stroke="currentColor" stroke-width="1.5"/>
+                                <path d="M2 13.5l4-4 3 3 2.5-2.5 4.5 4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            <span class="text-xs">Image</span>
+                        </button>
+                        <button data-component="video" type="button" class="flex aspect-square flex-col items-center justify-center gap-1.5 rounded-xl border border-white/10 bg-slate-950 text-slate-400 transition hover:border-cyan-400/40 hover:text-cyan-300">
+                            <svg class="size-6" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                                <rect x="2" y="5" width="12" height="10" rx="2" stroke="currentColor" stroke-width="1.5"/>
+                                <path d="M14 8.5l4-2v5l-4-2V8.5z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+                            </svg>
+                            <span class="text-xs">Video</span>
+                        </button>
+                        <button data-component="carousel" type="button" class="flex aspect-square flex-col items-center justify-center gap-1.5 rounded-xl border border-white/10 bg-slate-950 text-slate-400 transition hover:border-cyan-400/40 hover:text-cyan-300">
+                            <svg class="size-6" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                                <rect x="1" y="6" width="4" height="7" rx="1" stroke="currentColor" stroke-width="1.5" opacity="0.4"/>
+                                <rect x="6" y="3" width="8" height="11" rx="1.5" stroke="currentColor" stroke-width="1.5"/>
+                                <rect x="15" y="6" width="4" height="7" rx="1" stroke="currentColor" stroke-width="1.5" opacity="0.4"/>
+                                <circle cx="8.5" cy="17.5" r="0.75" fill="currentColor"/>
+                                <circle cx="10" cy="17.5" r="0.75" fill="currentColor"/>
+                                <circle cx="11.5" cy="17.5" r="0.75" fill="currentColor"/>
+                            </svg>
+                            <span class="text-xs">Carousel</span>
+                        </button>
+                        <button data-component="ticker" type="button" class="flex aspect-square flex-col items-center justify-center gap-1.5 rounded-xl border border-white/10 bg-slate-950 text-slate-400 transition hover:border-cyan-400/40 hover:text-cyan-300">
+                            <svg class="size-6" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                                <rect x="2" y="7" width="16" height="6" rx="1.5" stroke="currentColor" stroke-width="1.5"/>
+                                <path d="M5 10h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                                <path d="M13 8.5l2.5 1.5-2.5 1.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            <span class="text-xs">Ticker</span>
+                        </button>
+                        <button data-component="clock" type="button" class="flex aspect-square flex-col items-center justify-center gap-1.5 rounded-xl border border-white/10 bg-slate-950 text-slate-400 transition hover:border-cyan-400/40 hover:text-cyan-300">
+                            <svg class="size-6" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                                <circle cx="10" cy="10" r="7.5" stroke="currentColor" stroke-width="1.5"/>
+                                <path d="M10 6v4l2.5 2.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            <span class="text-xs">Clock</span>
+                        </button>
+                        <button data-component="weather" type="button" class="flex aspect-square flex-col items-center justify-center gap-1.5 rounded-xl border border-white/10 bg-slate-950 text-slate-400 transition hover:border-cyan-400/40 hover:text-cyan-300">
+                            <svg class="size-6" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                                <circle cx="10" cy="8.5" r="3" stroke="currentColor" stroke-width="1.5"/>
+                                <path d="M10 3v1M10 14v1M3.5 8.5h1M15.5 8.5h1M5.6 4.6l.7.7M13.7 4.6l-.7.7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                                <path d="M5 16a3 3 0 010-6h.5a4 4 0 017 0H13a3 3 0 010 6H5z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+                            </svg>
+                            <span class="text-xs">Weather</span>
+                        </button>
+                        <button data-component="countdown" type="button" class="flex aspect-square flex-col items-center justify-center gap-1.5 rounded-xl border border-white/10 bg-slate-950 text-slate-400 transition hover:border-cyan-400/40 hover:text-cyan-300">
+                            <svg class="size-6" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                                <circle cx="10" cy="11" r="7" stroke="currentColor" stroke-width="1.5"/>
+                                <path d="M10 8v3l-2.5 2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M8 3h4M10 1v2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                            </svg>
+                            <span class="text-xs">Countdown</span>
+                        </button>
+                        <button data-component="qr" type="button" class="flex aspect-square flex-col items-center justify-center gap-1.5 rounded-xl border border-white/10 bg-slate-950 text-slate-400 transition hover:border-cyan-400/40 hover:text-cyan-300">
+                            <svg class="size-6" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                                <rect x="3" y="3" width="5" height="5" rx="0.5" stroke="currentColor" stroke-width="1.5"/>
+                                <rect x="12" y="3" width="5" height="5" rx="0.5" stroke="currentColor" stroke-width="1.5"/>
+                                <rect x="3" y="12" width="5" height="5" rx="0.5" stroke="currentColor" stroke-width="1.5"/>
+                                <rect x="4.5" y="4.5" width="2" height="2" fill="currentColor"/>
+                                <rect x="13.5" y="4.5" width="2" height="2" fill="currentColor"/>
+                                <rect x="4.5" y="13.5" width="2" height="2" fill="currentColor"/>
+                                <path d="M12 12h2v2h-2zM14 14h2v2h-2zM12 16h2M16 12v2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            <span class="text-xs">QR Code</span>
+                        </button>
+                    </div>
+                </div>
             </div>
         </section>
     </main>
@@ -148,8 +227,8 @@
 
             // --- State ---
             let nodeCounter = 0;
-            const makeNode = () => ({ id: `n${++nodeCounter}`, direction: null, split: 50, children: [] });
-            let grid = { id: 'root', direction: null, split: 50, children: [] };
+            const makeNode = () => ({ id: `n${++nodeCounter}`, direction: null, split: 50, children: [], component: null });
+            let grid = { id: 'root', direction: null, split: 50, children: [], component: null };
             let selectedId = null;
             let isDragging = false;
 
@@ -176,9 +255,12 @@
             function slice(nodeId, direction) {
                 const node = findNode(grid, nodeId);
                 if (!node || node.children.length > 0) return; // leaves only
-                node.direction = direction;
-                node.split     = 50;
-                node.children  = [makeNode(), makeNode()];
+                const inherited = node.component;
+                node.direction  = direction;
+                node.split      = 50;
+                node.component  = null;
+                node.children   = [makeNode(), makeNode()];
+                node.children[0].component = inherited;
                 selectedId = node.children[0].id;
                 render();
             }
@@ -197,6 +279,19 @@
                 selectedId = null;
                 render();
             }
+
+            // --- Component definitions ---
+            const componentDefs = {
+                text:      '<path d="M5 5h10M10 5v10M7 15h6" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>',
+                image:     '<rect x="2" y="4" width="16" height="12" rx="2" stroke="currentColor" stroke-width="1"/><circle cx="7.5" cy="8.5" r="1.5" stroke="currentColor" stroke-width="1"/><path d="M2 13.5l4-4 3 3 2.5-2.5 4.5 4.5" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>',
+                video:     '<rect x="2" y="5" width="12" height="10" rx="2" stroke="currentColor" stroke-width="1"/><path d="M14 8.5l4-2v5l-4-2V8.5z" stroke="currentColor" stroke-width="1" stroke-linejoin="round"/>',
+                carousel:  '<rect x="1" y="6" width="4" height="7" rx="1" stroke="currentColor" stroke-width="1" opacity="0.4"/><rect x="6" y="3" width="8" height="11" rx="1.5" stroke="currentColor" stroke-width="1"/><rect x="15" y="6" width="4" height="7" rx="1" stroke="currentColor" stroke-width="1" opacity="0.4"/><circle cx="8.5" cy="17.5" r="0.75" fill="currentColor"/><circle cx="10" cy="17.5" r="0.75" fill="currentColor"/><circle cx="11.5" cy="17.5" r="0.75" fill="currentColor"/>',
+                ticker:    '<rect x="2" y="7" width="16" height="6" rx="1.5" stroke="currentColor" stroke-width="1"/><path d="M5 10h5" stroke="currentColor" stroke-width="1" stroke-linecap="round"/><path d="M13 8.5l2.5 1.5-2.5 1.5" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>',
+                clock:     '<circle cx="10" cy="10" r="7.5" stroke="currentColor" stroke-width="1"/><path d="M10 6v4l2.5 2.5" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>',
+                weather:   '<circle cx="10" cy="8.5" r="3" stroke="currentColor" stroke-width="1"/><path d="M10 3v1M10 14v1M3.5 8.5h1M15.5 8.5h1M5.6 4.6l.7.7M13.7 4.6l-.7.7" stroke="currentColor" stroke-width="1" stroke-linecap="round"/><path d="M5 16a3 3 0 010-6h.5a4 4 0 017 0H13a3 3 0 010 6H5z" stroke="currentColor" stroke-width="1" stroke-linejoin="round"/>',
+                countdown: '<circle cx="10" cy="11" r="7" stroke="currentColor" stroke-width="1"/><path d="M10 8v3l-2.5 2" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 3h4M10 1v2" stroke="currentColor" stroke-width="1" stroke-linecap="round"/>',
+                qr:        '<rect x="3" y="3" width="5" height="5" rx="0.5" stroke="currentColor" stroke-width="1"/><rect x="12" y="3" width="5" height="5" rx="0.5" stroke="currentColor" stroke-width="1"/><rect x="3" y="12" width="5" height="5" rx="0.5" stroke="currentColor" stroke-width="1"/><rect x="4.5" y="4.5" width="2" height="2" fill="currentColor"/><rect x="13.5" y="4.5" width="2" height="2" fill="currentColor"/><rect x="4.5" y="13.5" width="2" height="2" fill="currentColor"/><path d="M12 12h2v2h-2zM14 14h2v2h-2zM12 16h2M16 12v2" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>',
+            };
 
             // --- Render ---
             const fmtPill = (wPct, hPct) => {
@@ -319,10 +414,18 @@
                     el.appendChild(handle);
                     el.appendChild(w2);
                 } else {
-                    const orderLabel = document.createElement('div');
-                    orderLabel.textContent = order.get(node.id) ?? '';
-                    orderLabel.style.cssText = 'position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:48px; font-weight:700; color:rgba(34,211,238,0.35); pointer-events:none; z-index:4; user-select:none; font-family:monospace;';
-                    el.appendChild(orderLabel);
+                    const center = document.createElement('div');
+                    center.style.cssText = 'position:absolute; inset:0; display:flex; align-items:center; justify-content:center; pointer-events:none; z-index:4; user-select:none;';
+                    if (node.component && componentDefs[node.component]) {
+                        center.innerHTML = `<svg viewBox="0 0 20 20" fill="none" style="width:56px;height:56px;color:rgba(34,211,238,0.5)">${componentDefs[node.component]}</svg>`;
+                    } else {
+                        center.style.fontSize   = '48px';
+                        center.style.fontWeight = '700';
+                        center.style.color      = 'rgba(34,211,238,0.35)';
+                        center.style.fontFamily = 'monospace';
+                        center.textContent = order.get(node.id) ?? '';
+                    }
+                    el.appendChild(center);
 
                     const pill = document.createElement('div');
                     pill.dataset.pctLabel = '';
@@ -374,13 +477,33 @@
                     btnSliceV.classList.toggle('hidden', !isLeaf);
                     btnDelete.classList.toggle('hidden', selectedId === 'root');
                 }
+
+                // Highlight active component button
+                const selectedNode = selectedId ? findNode(grid, selectedId) : null;
+                document.querySelectorAll('[data-component]').forEach(btn => {
+                    const active = selectedNode?.component === btn.dataset.component;
+                    btn.classList.toggle('border-cyan-400/60', active);
+                    btn.classList.toggle('text-cyan-300', active);
+                    btn.classList.toggle('border-white/10', !active);
+                    btn.classList.toggle('text-slate-400', !active);
+                });
             }
 
             // --- Control button events ---
             btnSliceH.addEventListener('click', e => { e.stopPropagation(); if (selectedId) slice(selectedId, 'h'); });
             btnSliceV.addEventListener('click', e => { e.stopPropagation(); if (selectedId) slice(selectedId, 'v'); });
             btnDelete.addEventListener('click', e => { e.stopPropagation(); if (selectedId) deleteNode(selectedId); });
-            btnSave.addEventListener('click',   () => console.log('grid JSON:', JSON.stringify(grid, null, 2)));
+            btnSave.addEventListener('click', () => console.log('grid JSON:', JSON.stringify(grid, null, 2)));
+
+            document.querySelectorAll('[data-component]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    if (!selectedId) return;
+                    const node = findNode(grid, selectedId);
+                    if (!node || node.children.length > 0) return;
+                    node.component = node.component === btn.dataset.component ? null : btn.dataset.component;
+                    render();
+                });
+            });
 
             // Deselect on outside click
             document.addEventListener('click', () => { selectedId = null; render(); });
