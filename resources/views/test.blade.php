@@ -19,30 +19,48 @@
                     class="relative isolate w-full overflow-hidden rounded-xl border border-dashed border-cyan-400/30 bg-slate-950/70 shadow-2xl shadow-cyan-950/20 transition xl:h-[var(--canvas-height)] xl:w-[var(--canvas-width)]"
                 >
                     <div id="grid-container" class="absolute inset-0"></div>
+                </div>
+            </div>
 
-                    <div id="canvas-overlay" class="pointer-events-none absolute inset-0 z-20 hidden">
-                        <div class="pointer-events-auto absolute bottom-5 right-5 flex gap-2.5">
-                            <button id="btn-slice-h" type="button" class="grid size-10 place-items-center rounded-lg border border-cyan-400/40 bg-slate-900/95 text-slate-100 shadow-lg shadow-slate-950/60 transition hover:border-cyan-300 hover:text-cyan-300">
-                                <svg class="size-5" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-                                    <path d="M3 10H17" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-dasharray="3 3" />
-                                </svg>
-                            </button>
-                            <button id="btn-slice-v" type="button" class="grid size-10 place-items-center rounded-lg border border-cyan-400/40 bg-slate-900/95 text-slate-100 shadow-lg shadow-slate-950/60 transition hover:border-cyan-300 hover:text-cyan-300">
-                                <svg class="size-5" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-                                    <path d="M10 3V17" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-dasharray="3 3" />
-                                </svg>
-                            </button>
-                            <button id="btn-delete" type="button" class="grid size-10 place-items-center rounded-lg border border-cyan-400/40 bg-slate-900/95 text-slate-100 shadow-lg shadow-slate-950/60 transition hover:border-cyan-300 hover:text-cyan-300">
-                                <svg class="size-5" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-                                    <path d="M7.5 2.75H12.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
-                                    <path d="M3.75 5.25H16.25" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
-                                    <path d="M5.75 5.25L6.45 15.1C6.52 16.06 7.31 16.8 8.27 16.8H11.73C12.69 16.8 13.48 16.06 13.55 15.1L14.25 5.25" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
-                                    <path d="M8.5 8.25V13.25" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
-                                    <path d="M11.5 8.25V13.25" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
+            <div id="canvas-overlay" class="pointer-events-none absolute bottom-5 right-5 z-20 hidden">
+                <div class="pointer-events-auto flex gap-2.5">
+                    <button id="btn-slice-h" type="button" title="Split horizontally" aria-label="Split horizontally" class="grid size-10 place-items-center rounded-lg border border-cyan-400/40 bg-slate-900/95 text-slate-100 shadow-lg shadow-slate-950/60 transition hover:border-cyan-300 hover:text-cyan-300">
+                        <svg class="size-5" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                            <path d="M3 10H17" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-dasharray="3 3" />
+                        </svg>
+                    </button>
+                    <button id="btn-slice-v" type="button" title="Split vertically" aria-label="Split vertically" class="grid size-10 place-items-center rounded-lg border border-cyan-400/40 bg-slate-900/95 text-slate-100 shadow-lg shadow-slate-950/60 transition hover:border-cyan-300 hover:text-cyan-300">
+                        <svg class="size-5" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                            <path d="M10 3V17" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-dasharray="3 3" />
+                        </svg>
+                    </button>
+                    <button id="btn-delete" type="button" title="Delete section" aria-label="Delete section" class="grid size-10 place-items-center rounded-lg border border-red-400/40 bg-red-500/10 text-red-300 shadow-lg shadow-slate-950/60 transition hover:border-red-300 hover:bg-red-500/20 hover:text-red-200">
+                        <svg class="size-5" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                            <path d="M7.5 2.75H12.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                            <path d="M3.75 5.25H16.25" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                            <path d="M5.75 5.25L6.45 15.1C6.52 16.06 7.31 16.8 8.27 16.8H11.73C12.69 16.8 13.48 16.06 13.55 15.1L14.25 5.25" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                            <path d="M8.5 8.25V13.25" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                            <path d="M11.5 8.25V13.25" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                        </svg>
+                    </button>
+                    <button id="btn-delete-all" type="button" title="Delete all sections" aria-label="Delete all sections" class="grid size-10 place-items-center rounded-lg border border-red-400/40 bg-red-500/10 text-red-300 shadow-lg shadow-slate-950/60 transition hover:border-red-300 hover:bg-red-500/20 hover:text-red-200">
+                        <svg class="size-5" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                            <g opacity="0.8">
+                                <path d="M3 5V2.75H6.25" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                                <path d="M8.5 2.75H11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                                <path d="M13.25 2.75H15.75V5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                                <path d="M3 7.5V10.25" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                                <path d="M3 12.75V15.25H5.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                                <path d="M8 15.25H10.25" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                                <path d="M15.75 7.5V8.75" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                            </g>
+                            <path d="M12.25 7.75H14.75" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                            <path d="M10.5 9.75H16.75" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                            <path d="M11.4 9.75L11.8 16.1C11.84 16.69 12.34 17.15 12.93 17.15H14.07C14.66 17.15 15.16 16.69 15.2 16.1L15.6 9.75" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                            <path d="M13.1 11.5V14.6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                            <path d="M13.9 11.5V14.6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                        </svg>
+                    </button>
                 </div>
             </div>
         </section>
@@ -216,6 +234,7 @@
             const btnSliceH      = document.getElementById('btn-slice-h');
             const btnSliceV      = document.getElementById('btn-slice-v');
             const btnDelete      = document.getElementById('btn-delete');
+            const btnDeleteAll   = document.getElementById('btn-delete-all');
             const btnSave        = document.getElementById('btn-save');
             const btnViewAdmin   = document.getElementById('btn-view-admin');
             const btnViewCustomer= document.getElementById('btn-view-customer');
@@ -300,6 +319,14 @@
                     parent.children   = survivor.children;
                 }
                 selectedId = null;
+                render();
+            }
+
+            function clearCanvas() {
+                nodeCounter = 0;
+                grid = { id: 'root', direction: null, split: 50, children: [], component: null };
+                selectedId = null;
+                lastCustomerKey = null;
                 render();
             }
 
@@ -611,7 +638,6 @@
                 const selectedNode = selectedId ? findNode(grid, selectedId) : null;
                 const isCustomer   = viewMode === 'customer';
 
-                // Canvas overlay — hidden entirely in customer mode
                 const hasSelection = selectedId !== null;
                 canvasOverlay.classList.toggle('hidden', !hasSelection || isCustomer);
 
@@ -620,6 +646,7 @@
                     btnSliceH.classList.toggle('hidden', !isLeaf);
                     btnSliceV.classList.toggle('hidden', !isLeaf);
                     btnDelete.classList.toggle('hidden', selectedId === 'root');
+                    btnDeleteAll.classList.toggle('hidden', selectedId === 'root');
                 }
 
                 // Admin: highlight active component button
@@ -670,13 +697,15 @@
             btnSliceH.addEventListener('click', e => { e.stopPropagation(); if (selectedId) slice(selectedId, 'h'); });
             btnSliceV.addEventListener('click', e => { e.stopPropagation(); if (selectedId) slice(selectedId, 'v'); });
             btnDelete.addEventListener('click', e => { e.stopPropagation(); if (selectedId) deleteNode(selectedId); });
+            btnDeleteAll.addEventListener('click', e => { e.stopPropagation(); clearCanvas(); });
             btnSave.addEventListener('click', () => console.log('grid JSON:', JSON.stringify(grid, null, 2)));
 
             btnViewAdmin.addEventListener('click', () => { viewMode = 'admin'; render(); });
             btnViewCustomer.addEventListener('click', () => { viewMode = 'customer'; render(); });
 
             document.querySelectorAll('[data-component]').forEach(btn => {
-                btn.addEventListener('click', () => {
+                btn.addEventListener('click', e => {
+                    e.stopPropagation();
                     if (!selectedId) return;
                     const node = findNode(grid, selectedId);
                     if (!node || node.children.length > 0) return;
