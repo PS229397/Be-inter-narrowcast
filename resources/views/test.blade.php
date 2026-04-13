@@ -617,7 +617,22 @@
                 return map;
             }
 
-            function buildEl(node, wPct = 100, hPct = 100, order = new Map()) {
+            const canvasCornerRadius = '0.75rem';
+
+            function applyCornerRadius(el, corners) {
+                el.style.borderTopLeftRadius = corners.topLeft ? canvasCornerRadius : '0';
+                el.style.borderTopRightRadius = corners.topRight ? canvasCornerRadius : '0';
+                el.style.borderBottomRightRadius = corners.bottomRight ? canvasCornerRadius : '0';
+                el.style.borderBottomLeftRadius = corners.bottomLeft ? canvasCornerRadius : '0';
+            }
+
+            function buildEl(
+                node,
+                wPct = 100,
+                hPct = 100,
+                order = new Map(),
+                corners = { topLeft: true, topRight: true, bottomRight: true, bottomLeft: true },
+            ) {
                 const el = document.createElement('div');
                 el.dataset.nodeId = node.id;
                 el.style.cssText  = 'width:100%; height:100%; position:relative; overflow:hidden; box-sizing:border-box;';
@@ -625,6 +640,32 @@
                 if (node.children.length > 0) {
                     const isH  = node.direction === 'h';
                     const split = node.split ?? 50;
+                    const child1Corners = isH
+                        ? {
+                            topLeft: corners.topLeft,
+                            topRight: corners.topRight,
+                            bottomRight: false,
+                            bottomLeft: false,
+                        }
+                        : {
+                            topLeft: corners.topLeft,
+                            topRight: false,
+                            bottomRight: false,
+                            bottomLeft: corners.bottomLeft,
+                        };
+                    const child2Corners = isH
+                        ? {
+                            topLeft: false,
+                            topRight: false,
+                            bottomRight: corners.bottomRight,
+                            bottomLeft: corners.bottomLeft,
+                        }
+                        : {
+                            topLeft: false,
+                            topRight: corners.topRight,
+                            bottomRight: corners.bottomRight,
+                            bottomLeft: false,
+                        };
 
                     el.style.display       = 'flex';
                     el.style.flexDirection = isH ? 'column' : 'row';
@@ -712,17 +753,21 @@
                     w1.appendChild(buildEl(node.children[0],
                         isH ? wPct : wPct * split / 100,
                         isH ? hPct * split / 100 : hPct,
-                        order
+                        order,
+                        child1Corners
                     ));
                     w2.appendChild(buildEl(node.children[1],
                         isH ? wPct : wPct * (100 - split) / 100,
                         isH ? hPct * (100 - split) / 100 : hPct,
-                        order
+                        order,
+                        child2Corners
                     ));
                     el.appendChild(w1);
                     el.appendChild(handle);
                     el.appendChild(w2);
                 } else {
+                    applyCornerRadius(el, corners);
+
                     const center = document.createElement('div');
                     center.style.cssText = 'position:absolute; inset:0; display:flex; align-items:center; justify-content:center; pointer-events:none; z-index:4; user-select:none;';
                     if (node.component && componentDefs[node.component]) {
