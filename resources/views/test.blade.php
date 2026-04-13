@@ -9,7 +9,7 @@
 <body class="min-h-screen bg-slate-950 text-slate-50">
     <main
         id="layout-preview"
-        style="--canvas-width: 940px; --canvas-height: 540px; --preview-height: 580px; --section-1-width: 980px; --section-2-width: 440px;"
+        style="--canvas-width: 940px; --canvas-height: 540px; --preview-height: 1000px; --section-1-width: 1000px; --section-2-width: 420px;"
         class="mx-auto grid min-h-screen w-full grid-cols-1 gap-[20px] px-4 py-8 lg:py-16 xl:w-[1440px] xl:max-w-[1440px] xl:grid-cols-[var(--section-1-width)_var(--section-2-width)] xl:px-0 xl:items-center xl:justify-center"
     >
         <section class="w-full rounded-xl border border-white/10 bg-slate-900 shadow-2xl shadow-cyan-950/40 xl:h-[var(--preview-height)] xl:w-[var(--section-1-width)]">
@@ -88,9 +88,9 @@
 
             const applyOrientation = (orientation) => {
                 const size = sizes[orientation] ?? sizes.landscape;
-                const previewHeight = size.height + 40;
-                const section1Width = size.width + 40;
-                const section2Width = 1440 - 20 - section1Width;
+                const previewHeight = 1000;
+                const section1Width = 1000;
+                const section2Width = 420;
 
                 preview.style.setProperty('--canvas-width', `${size.width}px`);
                 preview.style.setProperty('--canvas-height', `${size.height}px`);
