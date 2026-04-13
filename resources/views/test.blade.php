@@ -107,8 +107,9 @@
                     </p>
                 </div>
             </div>
-            <div class="h-full rounded-xl border border-white/10 bg-slate-900 p-5 shadow-2xl shadow-cyan-950/40 xl:w-[var(--section-2-width)]">
-                <div class="flex flex-col gap-4">
+            <div class="h-full rounded-xl border border-white/10 bg-slate-900 p-5 shadow-2xl shadow-cyan-950/40 xl:w-[var(--section-2-width)] flex flex-col">
+                <!-- Admin panel -->
+                <div id="panel-admin" class="flex flex-col gap-4 flex-1 min-h-0 overflow-y-auto">
                     <p class="text-sm font-medium text-slate-400">Base components</p>
                     <div class="grid grid-cols-3 gap-2">
                         <button data-component="text" type="button" class="flex aspect-square flex-col items-center justify-center gap-1.5 rounded-xl border border-white/10 bg-slate-950 text-slate-400 transition hover:border-cyan-400/40 hover:text-cyan-300">
@@ -188,6 +189,19 @@
                         </button>
                     </div>
                 </div>
+
+                <!-- Customer panel -->
+                <div id="panel-customer" class="hidden flex-1 min-h-0 flex flex-col overflow-y-auto">
+                    <div id="customer-input" class="flex flex-col flex-1 min-h-0">
+                        <p class="text-sm text-slate-500">Select a section in the layout to edit its content.</p>
+                    </div>
+                </div>
+
+                <!-- View toggle -->
+                <div class="mt-auto flex gap-2 pt-4 border-t border-white/10 shrink-0">
+                    <button id="btn-view-admin" type="button" class="h-9 flex-1 rounded-xl border border-cyan-400/40 bg-cyan-500/10 text-sm font-medium text-cyan-300 transition hover:bg-cyan-500/20">Admin</button>
+                    <button id="btn-view-customer" type="button" class="h-9 flex-1 rounded-xl border border-white/10 bg-slate-950 text-sm font-medium text-slate-400 transition hover:border-white/20 hover:text-slate-200">Customer</button>
+                </div>
             </div>
         </section>
     </main>
@@ -203,6 +217,11 @@
             const btnSliceV      = document.getElementById('btn-slice-v');
             const btnDelete      = document.getElementById('btn-delete');
             const btnSave        = document.getElementById('btn-save');
+            const btnViewAdmin   = document.getElementById('btn-view-admin');
+            const btnViewCustomer= document.getElementById('btn-view-customer');
+            const panelAdmin     = document.getElementById('panel-admin');
+            const panelCustomer  = document.getElementById('panel-customer');
+            const customerInput  = document.getElementById('customer-input');
 
             // --- Orientation ---
             const sizes = {
@@ -231,6 +250,7 @@
             let grid = { id: 'root', direction: null, split: 50, children: [], component: null };
             let selectedId = null;
             let isDragging = false;
+            let viewMode   = 'admin';
 
             // --- Tree helpers ---
             function findNode(node, id) {
@@ -292,6 +312,125 @@
                 countdown: '<circle cx="10" cy="11" r="7" stroke="currentColor" stroke-width="1"/><path d="M10 8v3l-2.5 2" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 3h4M10 1v2" stroke="currentColor" stroke-width="1" stroke-linecap="round"/>',
                 qr:        '<rect x="3" y="3" width="5" height="5" rx="0.5" stroke="currentColor" stroke-width="1"/><rect x="12" y="3" width="5" height="5" rx="0.5" stroke="currentColor" stroke-width="1"/><rect x="3" y="12" width="5" height="5" rx="0.5" stroke="currentColor" stroke-width="1"/><rect x="4.5" y="4.5" width="2" height="2" fill="currentColor"/><rect x="13.5" y="4.5" width="2" height="2" fill="currentColor"/><rect x="4.5" y="13.5" width="2" height="2" fill="currentColor"/><path d="M12 12h2v2h-2zM14 14h2v2h-2zM12 16h2M16 12v2" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>',
             };
+
+            // --- Customer input builder ---
+            const inputClass  = 'w-full rounded-xl border border-white/10 bg-slate-950 px-4 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-cyan-400/60';
+            const labelClass  = 'text-xs font-medium text-slate-400';
+            const fieldClass  = 'flex flex-col gap-1.5';
+            const selectClass = 'h-11 w-full appearance-none rounded-xl border border-white/10 bg-slate-950 px-4 text-sm text-white outline-none transition focus:border-cyan-400/60';
+
+            function buildCustomerInput(component) {
+                const uploadZone = (accept, label) => `
+                    <label class="flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-white/15 bg-slate-950 p-6 cursor-pointer transition hover:border-cyan-400/40">
+                        <svg class="size-7 text-slate-500" viewBox="0 0 20 20" fill="none"><path d="M10 4v8M6 8l4-4 4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 16h14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                        <span class="text-xs text-slate-400">${label}</span>
+                        <input type="file" accept="${accept}" class="hidden">
+                    </label>`;
+
+                const map = {
+                    text: `
+                        <p class="${labelClass}">Text content</p>
+                        <div class="rounded-xl border border-white/10 bg-slate-950 overflow-hidden flex flex-col h-[80%]">
+                            <div class="flex items-center gap-0.5 border-b border-white/10 px-2 py-1.5 shrink-0">
+                                <button class="px-2 py-0.5 rounded text-xs font-bold text-slate-400 hover:bg-white/5 hover:text-white transition">B</button>
+                                <button class="px-2 py-0.5 rounded text-xs italic text-slate-400 hover:bg-white/5 hover:text-white transition">I</button>
+                                <button class="px-2 py-0.5 rounded text-xs underline text-slate-400 hover:bg-white/5 hover:text-white transition">U</button>
+                                <div class="w-px h-4 bg-white/10 mx-1"></div>
+                                <button class="px-2 py-0.5 rounded text-xs text-slate-400 hover:bg-white/5 hover:text-white transition">H1</button>
+                                <button class="px-2 py-0.5 rounded text-xs text-slate-400 hover:bg-white/5 hover:text-white transition">H2</button>
+                                <div class="w-px h-4 bg-white/10 mx-1"></div>
+                                <button class="px-2 py-0.5 rounded text-xs text-slate-400 hover:bg-white/5 hover:text-white transition">≡</button>
+                                <button class="px-2 py-0.5 rounded text-xs text-slate-400 hover:bg-white/5 hover:text-white transition">⁝≡</button>
+                            </div>
+                            <div contenteditable="true" class="p-3 text-sm text-slate-300 flex-1 outline-none min-h-[80px]"></div>
+                        </div>`,
+
+                    image: `<label class="h-[80%] flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-white/15 bg-slate-950 cursor-pointer transition hover:border-cyan-400/40 min-h-[120px]">
+                        <svg class="size-7 text-slate-500" viewBox="0 0 20 20" fill="none"><path d="M10 4v8M6 8l4-4 4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 16h14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                        <span class="text-xs text-slate-400">Click to upload or drag & drop · PNG, JPG, WebP</span>
+                        <input type="file" accept="image/*" class="hidden"></label>`,
+
+                    video: `<label class="flex-1 flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-white/15 bg-slate-950 cursor-pointer transition hover:border-cyan-400/40 min-h-[120px]">
+                        <svg class="size-7 text-slate-500" viewBox="0 0 20 20" fill="none"><path d="M10 4v8M6 8l4-4 4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 16h14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                        <span class="text-xs text-slate-400">Click to upload or drag & drop · MP4, WebM</span>
+                        <input type="file" accept="video/*" class="hidden"></label>`,
+
+                    carousel: `
+                        <p class="${labelClass}">Slides</p>
+                        <label class="flex-1 flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-white/15 bg-slate-950 cursor-pointer transition hover:border-cyan-400/40 min-h-[120px]">
+                            <svg class="size-7 text-slate-500" viewBox="0 0 20 20" fill="none"><path d="M10 4v8M6 8l4-4 4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 16h14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                            <span class="text-xs text-slate-400">Add images · PNG, JPG, WebP</span>
+                            <span class="text-xs text-slate-600">Each uploaded image becomes a slide.</span>
+                            <input type="file" accept="image/*" multiple class="hidden">
+                        </label>`,
+
+                    ticker: `
+                        <p class="${labelClass}">Scrolling text</p>
+                        <textarea placeholder="Breaking news · Type your message here..." class="${inputClass} py-3 resize-none flex-1 min-h-[80px]"></textarea>
+                        <div class="${fieldClass} shrink-0">
+                            <span class="${labelClass}">Speed</span>
+                            <input type="range" min="1" max="10" value="5" class="w-full accent-cyan-400">
+                        </div>`,
+
+                    clock: `
+                        <div class="${fieldClass}">
+                            <span class="${labelClass}">Time zone</span>
+                            <select class="${selectClass}">
+                                <option>Europe/Amsterdam</option>
+                                <option>Europe/London</option>
+                                <option>America/New_York</option>
+                                <option>America/Los_Angeles</option>
+                                <option>Asia/Tokyo</option>
+                            </select>
+                        </div>
+                        <div class="${fieldClass}">
+                            <span class="${labelClass}">Format</span>
+                            <select class="${selectClass}">
+                                <option>HH:mm:ss (24h)</option>
+                                <option>HH:mm (24h)</option>
+                                <option>hh:mm a (12h)</option>
+                            </select>
+                        </div>`,
+
+                    weather: `
+                        <div class="${fieldClass}">
+                            <span class="${labelClass}">Location</span>
+                            <div class="relative">
+                                <input type="text" placeholder="Amsterdam, Netherlands" class="${inputClass} h-11 pr-10">
+                                <svg class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 size-4 text-slate-500" viewBox="0 0 20 20" fill="none"><path d="M10 2a6 6 0 016 6c0 4-6 10-6 10S4 12 4 8a6 6 0 016-6z" stroke="currentColor" stroke-width="1.5"/><circle cx="10" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/></svg>
+                            </div>
+                        </div>
+                        <div class="${fieldClass}">
+                            <span class="${labelClass}">Unit</span>
+                            <select class="${selectClass}">
+                                <option>°C — Celsius</option>
+                                <option>°F — Fahrenheit</option>
+                            </select>
+                        </div>`,
+
+                    countdown: `
+                        <div class="${fieldClass}">
+                            <span class="${labelClass}">Target date</span>
+                            <input type="date" class="${inputClass} h-11">
+                        </div>
+                        <div class="${fieldClass}">
+                            <span class="${labelClass}">Target time</span>
+                            <input type="time" class="${inputClass} h-11">
+                        </div>
+                        <div class="${fieldClass}">
+                            <span class="${labelClass}">Label</span>
+                            <input type="text" placeholder="Event starts in..." class="${inputClass} h-11">
+                        </div>`,
+
+                    qr: `
+                        <div class="${fieldClass}">
+                            <span class="${labelClass}">URL</span>
+                            <input type="url" placeholder="https://example.com" class="${inputClass} h-11">
+                        </div>`,
+                };
+
+                return map[component] ?? null;
+            }
 
             // --- Render ---
             const fmtPill = (wPct, hPct) => {
@@ -466,20 +605,21 @@
                 rootEl.style.inset    = '0';
                 gridContainer.appendChild(rootEl);
 
-                // Controls visibility
-                const hasSelection = selectedId !== null;
-                canvasOverlay.classList.toggle('hidden', !hasSelection);
+                const selectedNode = selectedId ? findNode(grid, selectedId) : null;
+                const isCustomer   = viewMode === 'customer';
 
-                if (hasSelection) {
-                    const node   = findNode(grid, selectedId);
-                    const isLeaf = node && node.children.length === 0;
+                // Canvas overlay — hidden entirely in customer mode
+                const hasSelection = selectedId !== null;
+                canvasOverlay.classList.toggle('hidden', !hasSelection || isCustomer);
+
+                if (hasSelection && !isCustomer) {
+                    const isLeaf = selectedNode && selectedNode.children.length === 0;
                     btnSliceH.classList.toggle('hidden', !isLeaf);
                     btnSliceV.classList.toggle('hidden', !isLeaf);
                     btnDelete.classList.toggle('hidden', selectedId === 'root');
                 }
 
-                // Highlight active component button
-                const selectedNode = selectedId ? findNode(grid, selectedId) : null;
+                // Admin: highlight active component button
                 document.querySelectorAll('[data-component]').forEach(btn => {
                     const active = selectedNode?.component === btn.dataset.component;
                     btn.classList.toggle('border-cyan-400/60', active);
@@ -487,6 +627,29 @@
                     btn.classList.toggle('border-white/10', !active);
                     btn.classList.toggle('text-slate-400', !active);
                 });
+
+                // Customer: update context input panel
+                if (isCustomer) {
+                    const component = selectedNode?.children.length === 0 ? selectedNode?.component : null;
+                    const html = component
+                        ? buildCustomerInput(component)
+                        : selectedNode
+                            ? '<p class="text-sm text-slate-500">No component assigned to this section.</p>'
+                            : '<p class="text-sm text-slate-500">Select a section in the layout to edit its content.</p>';
+                    customerInput.innerHTML = `<div class="flex flex-col gap-5 h-full">${html}</div>`;
+                }
+
+                // Panel visibility
+                panelAdmin.classList.toggle('hidden', isCustomer);
+                panelCustomer.classList.toggle('hidden', !isCustomer);
+
+                // View toggle button states
+                btnViewAdmin.className    = isCustomer
+                    ? 'h-9 flex-1 rounded-xl border border-white/10 bg-slate-950 text-sm font-medium text-slate-400 transition hover:border-white/20 hover:text-slate-200'
+                    : 'h-9 flex-1 rounded-xl border border-cyan-400/40 bg-cyan-500/10 text-sm font-medium text-cyan-300 transition hover:bg-cyan-500/20';
+                btnViewCustomer.className = isCustomer
+                    ? 'h-9 flex-1 rounded-xl border border-cyan-400/40 bg-cyan-500/10 text-sm font-medium text-cyan-300 transition hover:bg-cyan-500/20'
+                    : 'h-9 flex-1 rounded-xl border border-white/10 bg-slate-950 text-sm font-medium text-slate-400 transition hover:border-white/20 hover:text-slate-200';
             }
 
             // --- Control button events ---
@@ -494,6 +657,9 @@
             btnSliceV.addEventListener('click', e => { e.stopPropagation(); if (selectedId) slice(selectedId, 'v'); });
             btnDelete.addEventListener('click', e => { e.stopPropagation(); if (selectedId) deleteNode(selectedId); });
             btnSave.addEventListener('click', () => console.log('grid JSON:', JSON.stringify(grid, null, 2)));
+
+            btnViewAdmin.addEventListener('click', () => { viewMode = 'admin'; render(); });
+            btnViewCustomer.addEventListener('click', () => { viewMode = 'customer'; render(); });
 
             document.querySelectorAll('[data-component]').forEach(btn => {
                 btn.addEventListener('click', () => {
@@ -505,8 +671,12 @@
                 });
             });
 
-            // Deselect on outside click
-            document.addEventListener('click', () => { selectedId = null; render(); });
+            // Deselect on outside click (skip in customer mode — inputs must stay active)
+            document.addEventListener('click', () => {
+                if (viewMode === 'customer') return;
+                selectedId = null;
+                render();
+            });
 
             // --- Init ---
             orientationSelect.addEventListener('change', e => applyOrientation(e.target.value));
