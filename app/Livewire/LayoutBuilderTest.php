@@ -2,23 +2,19 @@
 
 namespace App\Livewire;
 
-use App\Enums\Orientation;
 use App\Filament\Forms\Components\LayoutBuilder;
 use App\Models\Customer;
+use App\Models\CustomComponent;
 use App\Models\Layout;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
-use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
-use Illuminate\Support\Facades\Storage;
 use Livewire\Attributes\Locked;
 use Livewire\Component;
-use Livewire\WithFileUploads;
 
 class LayoutBuilderTest extends Component implements HasForms
 {
     use InteractsWithForms;
-    use WithFileUploads;
 
     /** @var array<string, mixed> */
     public array $data = [];
@@ -31,9 +27,6 @@ class LayoutBuilderTest extends Component implements HasForms
 
     #[Locked]
     public ?int $layoutId = null;
-
-    // Temporary upload slot — reused for every single-file upload
-    public $uploadedFile = null;
 
     /**
      * @return array<string, mixed>
@@ -74,6 +67,7 @@ class LayoutBuilderTest extends Component implements HasForms
                 LayoutBuilder::make('grid')
                     ->standalone()
                     ->customerOptions(fn (): array => $this->getCustomerOptions())
+                    ->customComponents(fn (): array => $this->getCustomComponents())
                     ->orientation(fn (): string => $this->orientation)
                     ->hiddenLabel(),
             ]);
@@ -100,31 +94,36 @@ class LayoutBuilderTest extends Component implements HasForms
         }
     }
 
-    /**
-     * Called from Alpine after $wire.upload() completes.
-     * Moves the temp file to permanent public storage and returns the URL.
-     */
-    public function persistUpload(): string
-    {
-        if (! $this->uploadedFile) {
-            return '';
-        }
-
-        $path = $this->uploadedFile->storePublicly('slide-media', 'public');
-        $this->uploadedFile = null;
-
-        return Storage::disk('public')->url($path);
-    }
-
     public function getCustomerOptions(): array
     {
         return Customer::pluck('name', 'id')->toArray();
     }
 
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    public function getCustomComponents(): array
+    {
+        return CustomComponent::query()
+            ->with('customer:id,name')
+            ->when(
+                filled($this->customerIds),
+                fn ($query) => $query->whereIn('customer_id', $this->customerIds),
+            )
+            ->orderBy('title')
+            ->get()
+            ->map(fn (CustomComponent $component): array => [
+                'id' => $component->id,
+                'key' => 'custom:' . $component->id,
+                'title' => $component->title,
+                'customer' => $component->customer?->name,
+            ])
+            ->values()
+            ->all();
+    }
+
     public function render(): \Illuminate\View\View
     {
-        return view('livewire.layout-builder-test', [
-            'customers' => Customer::orderBy('name')->pluck('name', 'id'),
-        ]);
+        return view('livewire.layout-builder-test');
     }
 }

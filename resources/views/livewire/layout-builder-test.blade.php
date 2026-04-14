@@ -15,25 +15,6 @@
         --layout-accent-hover: #ffb224;
         --layout-accent-ink:   #141414;
     }
-
-    [data-view-toggle][data-active="true"] {
-        background: var(--layout-accent) !important;
-        border-color: var(--layout-accent) !important;
-        color: var(--layout-accent-ink) !important;
-    }
-    [data-view-toggle][data-active="true"]:hover {
-        background: var(--layout-accent-hover) !important;
-        border-color: var(--layout-accent-hover) !important;
-    }
-    [data-view-toggle][data-active="false"] {
-        background: var(--layout-panel-alt) !important;
-        border-color: rgba(255,255,255,0.12) !important;
-        color: var(--layout-text-muted) !important;
-    }
-    [data-view-toggle][data-active="false"]:hover {
-        border-color: rgba(255,255,255,0.25) !important;
-        color: var(--layout-text-soft) !important;
-    }
 </style>
 
 <div class="mx-auto w-full max-w-[1440px] px-4 py-8 lg:py-16 xl:px-0">

@@ -5,6 +5,8 @@
         $isPortrait           = $orientation === 'portrait';
         $isStandalone         = $isStandalone();
         $customerOptions      = $getCustomerOptions();
+        $customComponents     = $getCustomComponents();
+        $customComponentsKey  = md5(json_encode($customComponents));
         $canvasRatio          = $isPortrait ? '540 / 940' : '940 / 540';
         $canvasMaxW           = $isPortrait ? '360px' : '100%';
         $canvasMaxH           = $isPortrait ? '640px' : '520px';
@@ -156,11 +158,12 @@
             </div>
 
             <div
-                wire:key="layout-builder-{{ md5($statePath) }}-{{ $orientation }}"
+                wire:key="layout-builder-{{ md5($statePath) }}-{{ $orientation }}-{{ $customComponentsKey }}"
                 wire:ignore
                 x-data="layoutBuilder({
                     state:       $wire.{{ $applyStateBindingModifiers("\$entangle('{$statePath}')", isOptimisticallyLive: false) }},
                     orientation: @js($orientation),
+                    customComponents: @js($customComponents),
                     standalone:  true
                 })"
                 x-init="init()"
@@ -181,11 +184,12 @@
         </div>
     @else
         <div
-            wire:key="layout-builder-{{ md5($statePath) }}-{{ $orientation }}"
+            wire:key="layout-builder-{{ md5($statePath) }}-{{ $orientation }}-{{ $customComponentsKey }}"
             wire:ignore
             x-data="layoutBuilder({
                 state:       $wire.{{ $applyStateBindingModifiers("\$entangle('{$statePath}')", isOptimisticallyLive: false) }},
                 orientation: @js($orientation),
+                customComponents: @js($customComponents),
                 standalone:  false
             })"
             x-init="init()"
@@ -219,11 +223,7 @@
             Alpine.data('layoutBuilder', (config) => ({
         state:       config.state,
         orientation: config.orientation ?? 'landscape',
-
-        viewMode:     'admin',
-        slideContent: {},
-        liveHandles:  [],
-        uploadProgress: { image: 0, video: 0, carousel: 0 },
+        customComponents: config.customComponents ?? [],
 
         realSizes: {
             landscape: { width: 1920, height: 1080 },
@@ -240,6 +240,7 @@
             weather:   '<circle cx="10" cy="8.5" r="3" stroke="currentColor" stroke-width="1"/><path d="M10 3v1M10 14v1M3.5 8.5h1M15.5 8.5h1M5.6 4.6l.7.7M13.7 4.6l-.7.7" stroke="currentColor" stroke-width="1" stroke-linecap="round"/><path d="M5 16a3 3 0 010-6h.5a4 4 0 017 0H13a3 3 0 010 6H5z" stroke="currentColor" stroke-width="1" stroke-linejoin="round"/>',
             countdown: '<circle cx="10" cy="11" r="7" stroke="currentColor" stroke-width="1"/><path d="M10 8v3l-2.5 2" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 3h4M10 1v2" stroke="currentColor" stroke-width="1" stroke-linecap="round"/>',
             qr:        '<rect x="3" y="3" width="5" height="5" rx="0.5" stroke="currentColor" stroke-width="1"/><rect x="12" y="3" width="5" height="5" rx="0.5" stroke="currentColor" stroke-width="1"/><rect x="3" y="12" width="5" height="5" rx="0.5" stroke="currentColor" stroke-width="1"/><rect x="4.5" y="4.5" width="2" height="2" fill="currentColor"/><rect x="13.5" y="4.5" width="2" height="2" fill="currentColor"/><rect x="4.5" y="13.5" width="2" height="2" fill="currentColor"/><path d="M12 12h2v2h-2zM14 14h2v2h-2zM12 16h2M16 12v2" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>',
+            custom:    '<path d="M4 8.5A2.5 2.5 0 0 1 6.5 6H8V4.5A1.5 1.5 0 0 1 9.5 3h1A1.5 1.5 0 0 1 12 4.5V6h1.5A2.5 2.5 0 0 1 16 8.5v1A2.5 2.5 0 0 1 13.5 12H12v1.5A1.5 1.5 0 0 1 10.5 15h-1A1.5 1.5 0 0 1 8 13.5V12H6.5A2.5 2.5 0 0 1 4 9.5v-1Z" stroke="currentColor" stroke-width="1" stroke-linejoin="round"/><path d="M8 9h4M10 7v4" stroke="currentColor" stroke-width="1" stroke-linecap="round"/>',
         },
 
         canvasCornerRadius: '0.75rem',
@@ -247,10 +248,6 @@
         nodeCounter: 0,
         selectedId:  null,
         isDragging:  false,
-
-        // Carousel drag state
-        _carouselDragFrom: null,
-        _carouselDragOver: null,
 
         // ─── Lifecycle ──────────────────────────────────────────────────────
 
@@ -411,123 +408,16 @@
             this.render();
         },
 
-        // ─── Content helpers ─────────────────────────────────────────────────
-
-        getSelectedLeafComponent() {
-            if (!this.selectedId || !this.grid) return null;
-            const node = this.findNode(this.grid, this.selectedId);
-            if (!node || (node.children ?? []).length > 0) return null;
-            return node.component ?? null;
+        isCustomComponent(type) {
+            return typeof type === 'string' && type.startsWith('custom:');
         },
 
-        updateContent(nodeId, key, value) {
-            if (!nodeId) return;
-            this.slideContent = {
-                ...this.slideContent,
-                [nodeId]: { ...(this.slideContent[nodeId] ?? {}), [key]: value },
-            };
-        },
-
-        syncTextEditorContent() {
-            const editor = this.$refs.textEditor;
-
-            if (!editor || !this.selectedId) {
-                return;
+        getCustomComponent(type) {
+            if (!this.isCustomComponent(type)) {
+                return null;
             }
 
-            this.updateContent(this.selectedId, 'html', editor.innerHTML);
-
-            if (this.viewMode === 'customer') {
-                this.$nextTick(() => this.render());
-            }
-        },
-
-        execTextCommand(command, value = null) {
-            const editor = this.$refs.textEditor;
-            const selection = document.getSelection();
-
-            if (!editor || this.getSelectedLeafComponent() !== 'text') {
-                return;
-            }
-
-            if (!selection || !editor.contains(selection.anchorNode)) {
-                editor.focus();
-            }
-
-            if (command === 'foreColor') {
-                document.execCommand('styleWithCSS', false, true);
-            }
-
-            document.execCommand(command, false, value);
-            this.syncTextEditorContent();
-        },
-
-        // ─── File uploads (via Livewire WithFileUploads) ─────────────────────
-
-        async handleSingleUpload(nodeId, key, file, progressKey) {
-            if (!file) return;
-            this.uploadProgress[progressKey] = 1;
-            await new Promise((resolve, reject) => {
-                this.$wire.upload(
-                    'uploadedFile',
-                    file,
-                    resolve,
-                    reject,
-                    (e) => { this.uploadProgress[progressKey] = e.detail?.progress ?? 50; }
-                );
-            });
-            this.uploadProgress[progressKey] = 99;
-            const url = await this.$wire.persistUpload();
-            this.uploadProgress[progressKey] = 0;
-            this.updateContent(nodeId, key, url);
-            this.$nextTick(() => this.render());
-        },
-
-        async handleMultipleUpload(nodeId, key, files, progressKey) {
-            if (!files.length) return;
-            const urls = [];
-            for (let i = 0; i < files.length; i++) {
-                this.uploadProgress[progressKey] = Math.round((i / files.length) * 90) + 1;
-                await new Promise((resolve, reject) => {
-                    this.$wire.upload('uploadedFile', files[i], resolve, reject, () => {});
-                });
-                const url = await this.$wire.persistUpload();
-                urls.push(url);
-            }
-            this.uploadProgress[progressKey] = 0;
-            const current = this.slideContent[nodeId]?.[key] ?? [];
-            this.updateContent(nodeId, key, [...current, ...urls]);
-            this.$nextTick(() => this.render());
-        },
-
-        // ─── Carousel drag-reorder ───────────────────────────────────────────
-
-        carouselDragStart(nodeId, fromIdx) {
-            this._carouselDragFrom = fromIdx;
-        },
-
-        carouselDragOver(overIdx) {
-            this._carouselDragOver = overIdx;
-        },
-
-        carouselDrop(nodeId) {
-            const from = this._carouselDragFrom;
-            const to   = this._carouselDragOver;
-            if (from === null || to === null || from === to) return;
-            const images = [...(this.slideContent[nodeId]?.images ?? [])];
-            const [moved] = images.splice(from, 1);
-            images.splice(to, 0, moved);
-            this.updateContent(nodeId, 'images', images);
-            this._carouselDragFrom = null;
-            this._carouselDragOver = null;
-            this.$nextTick(() => this.render());
-        },
-
-        removeCarouselImage(nodeId, idx) {
-            const images = [...(this.slideContent[nodeId]?.images ?? [])];
-            images.splice(idx, 1);
-            this.updateContent(nodeId, 'images', images);
-            this.$nextTick(() => this.render());
+            return this.customComponents.find((component) => component.key === type) ?? null;
         },
 
         // ─── Rendering ───────────────────────────────────────────────────────
@@ -554,10 +444,6 @@
         },
 
         render() {
-            // Clear all live component timers
-            this.liveHandles.forEach(h => clearInterval(h));
-            this.liveHandles = [];
-
             const container = this.$refs.gridContainer;
             if (!container || !this.grid) return;
 
@@ -572,9 +458,9 @@
             const overlay      = this.$refs.canvasOverlay;
 
             if (overlay) {
-                // Overlay only visible in admin mode when something is selected
-                overlay.classList.toggle('hidden', this.viewMode === 'customer' || !hasSelection);
-                if (this.viewMode === 'admin' && hasSelection) {
+                overlay.classList.toggle('hidden', !hasSelection);
+
+                if (hasSelection) {
                     const isLeaf = selectedNode && (selectedNode.children ?? []).length === 0;
                     this.$refs.btnSliceH?.classList.toggle('hidden', !isLeaf);
                     this.$refs.btnSliceV?.classList.toggle('hidden', !isLeaf);
@@ -627,7 +513,7 @@
                 const dashIdle   = 'rgba(245,158,11,0.3)';
                 const dashHover  = 'rgba(245,158,11,0.7)';
                 const dashActive = 'rgba(245,158,11,1)';
-                const isInteractiveDivider = this.viewMode === 'admin';
+                const isInteractiveDivider = true;
                 const dashedBg   = (color, dir) => dir === 'h'
                     ? `repeating-linear-gradient(to right,${color} 0,${color} 4px,transparent 4px,transparent 8px)`
                     : `repeating-linear-gradient(to bottom,${color} 0,${color} 4px,transparent 4px,transparent 8px)`;
@@ -705,39 +591,45 @@
                 el.style.cursor          = 'pointer';
                 el.style.transition      = 'background-color 0.15s';
 
-                if (this.viewMode === 'customer' && node.component) {
-                    // Customer mode: render actual component content
-                    this._buildComponentEl(el, node);
+                const center = document.createElement('div');
+                center.style.cssText = 'position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:4;user-select:none;';
+                if (node.component && this.componentDefs[node.component]) {
+                    center.innerHTML = `<svg viewBox="0 0 20 20" fill="none" style="width:56px;height:56px;color:rgba(245,158,11,0.5)">${this.componentDefs[node.component]}</svg>`;
+                } else if (this.isCustomComponent(node.component)) {
+                    const customComponent = this.getCustomComponent(node.component);
+                    const label = customComponent?.title ?? 'Custom';
+
+                    center.style.flexDirection = 'column';
+                    center.style.gap = '8px';
+                    center.innerHTML = `<svg viewBox="0 0 20 20" fill="none" style="width:56px;height:56px;color:rgba(245,158,11,0.5)">${this.componentDefs.custom}</svg>`;
+
+                    const labelEl = document.createElement('div');
+                    labelEl.style.cssText = 'max-width:80%;font-size:12px;font-weight:600;line-height:1.2;color:rgba(245,158,11,0.72);text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;';
+                    labelEl.textContent = label;
+                    center.appendChild(labelEl);
                 } else {
-                    // Admin mode: SVG icon or sequential number
-                    const center = document.createElement('div');
-                    center.style.cssText = 'position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:4;user-select:none;';
-                    if (node.component && this.componentDefs[node.component]) {
-                        center.innerHTML = `<svg viewBox="0 0 20 20" fill="none" style="width:56px;height:56px;color:rgba(245,158,11,0.5)">${this.componentDefs[node.component]}</svg>`;
-                    } else {
-                        center.style.fontSize   = '48px';
-                        center.style.fontWeight = '700';
-                        center.style.color      = 'rgba(245,158,11,0.35)';
-                        center.style.fontFamily = 'monospace';
-                        center.textContent = order.get(node.id) ?? '';
-                    }
-                    el.appendChild(center);
-
-                    const pill = document.createElement('div');
-                    pill.dataset.pctLabel = '';
-                    pill.textContent      = this.fmtPill(wPct, hPct);
-                    pill.style.cssText    = 'position:absolute;bottom:5px;left:6px;font-size:10px;line-height:1;color:rgba(161,161,170,0.7);background:rgba(17,17,20,0.7);border:1px solid rgba(161,161,170,0.12);border-radius:999px;padding:3px 8px;pointer-events:none;z-index:5;user-select:none;font-family:monospace;white-space:nowrap;';
-                    el.appendChild(pill);
-
-                    el.addEventListener('mouseenter', () => {
-                        if (!this.isDragging && node.id !== this.selectedId)
-                            el.style.backgroundColor = 'rgba(245,158,11,0.10)';
-                    });
-                    el.addEventListener('mouseleave', () => {
-                        if (!this.isDragging && node.id !== this.selectedId)
-                            el.style.backgroundColor = 'rgba(17,17,20,0.55)';
-                    });
+                    center.style.fontSize   = '48px';
+                    center.style.fontWeight = '700';
+                    center.style.color      = 'rgba(245,158,11,0.35)';
+                    center.style.fontFamily = 'monospace';
+                    center.textContent = order.get(node.id) ?? '';
                 }
+                el.appendChild(center);
+
+                const pill = document.createElement('div');
+                pill.dataset.pctLabel = '';
+                pill.textContent      = this.fmtPill(wPct, hPct);
+                pill.style.cssText    = 'position:absolute;bottom:5px;left:6px;font-size:10px;line-height:1;color:rgba(161,161,170,0.7);background:rgba(17,17,20,0.7);border:1px solid rgba(161,161,170,0.12);border-radius:999px;padding:3px 8px;pointer-events:none;z-index:5;user-select:none;font-family:monospace;white-space:nowrap;';
+                el.appendChild(pill);
+
+                el.addEventListener('mouseenter', () => {
+                    if (!this.isDragging && node.id !== this.selectedId)
+                        el.style.backgroundColor = 'rgba(245,158,11,0.10)';
+                });
+                el.addEventListener('mouseleave', () => {
+                    if (!this.isDragging && node.id !== this.selectedId)
+                        el.style.backgroundColor = 'rgba(17,17,20,0.55)';
+                });
             }
 
             if (node.id === this.selectedId) {

@@ -21,6 +21,11 @@ class LayoutBuilder extends Field
     protected array | Closure $customerOptions = [];
 
     /**
+     * @var array<int, array<string, mixed>> | Closure
+     */
+    protected array | Closure $customComponents = [];
+
+    /**
      * @return array<string, mixed>
      */
     public static function emptyGrid(): array
@@ -58,6 +63,16 @@ class LayoutBuilder extends Field
         return $this;
     }
 
+    /**
+     * @param  array<int, array<string, mixed>> | Closure  $components
+     */
+    public function customComponents(array | Closure $components): static
+    {
+        $this->customComponents = $components;
+
+        return $this;
+    }
+
     public function getOrientation(): ?string
     {
         $orientation = $this->evaluate($this->orientation);
@@ -87,5 +102,16 @@ class LayoutBuilder extends Field
         $options = $this->evaluate($this->customerOptions);
 
         return $options;
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    public function getCustomComponents(): array
+    {
+        /** @var array<int, array<string, mixed>> $components */
+        $components = $this->evaluate($this->customComponents);
+
+        return $components;
     }
 }
