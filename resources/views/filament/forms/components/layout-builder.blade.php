@@ -381,6 +381,40 @@
             };
         },
 
+        syncTextEditorContent() {
+            const editor = this.$refs.textEditor;
+
+            if (!editor || !this.selectedId) {
+                return;
+            }
+
+            this.updateContent(this.selectedId, 'html', editor.innerHTML);
+
+            if (this.viewMode === 'customer') {
+                this.$nextTick(() => this.render());
+            }
+        },
+
+        execTextCommand(command, value = null) {
+            const editor = this.$refs.textEditor;
+            const selection = document.getSelection();
+
+            if (!editor || this.getSelectedLeafComponent() !== 'text') {
+                return;
+            }
+
+            if (!selection || !editor.contains(selection.anchorNode)) {
+                editor.focus();
+            }
+
+            if (command === 'foreColor') {
+                document.execCommand('styleWithCSS', false, true);
+            }
+
+            document.execCommand(command, false, value);
+            this.syncTextEditorContent();
+        },
+
         // ─── File uploads (via Livewire WithFileUploads) ─────────────────────
 
         async handleSingleUpload(nodeId, key, file, progressKey) {
@@ -684,8 +718,9 @@
 
                 case 'text': {
                     const wrap = document.createElement('div');
-                    wrap.style.cssText = 'position:absolute;inset:0;overflow:hidden;padding:10px 12px;font-size:13px;line-height:1.6;color:#e4e4e7;';
-                    wrap.innerHTML = content.html || '';
+                    wrap.style.cssText = 'position:absolute;inset:0;overflow:hidden;padding:10px 12px;font-size:13px;line-height:1.6;color:#e4e4e7;max-width:100%;overflow-wrap:anywhere;word-break:break-word;white-space:normal;';
+                    wrap.innerHTML = content.html || content.text || '';
+                    this._styleRichTextContent(wrap);
                     el.appendChild(wrap);
                     break;
                 }
@@ -765,18 +800,22 @@
                     const speed = content.speed ?? 5;
 
                     const bar = document.createElement('div');
-                    bar.style.cssText = 'position:absolute;top:50%;left:0;right:0;transform:translateY(-50%);height:28%;display:flex;align-items:center;overflow:hidden;background:rgba(0,0,0,0.65);';
+                    bar.style.cssText = 'position:absolute;inset:0;display:flex;align-items:center;overflow:hidden;';
+
+                    const track = document.createElement('div');
+                    track.style.cssText = 'width:100%;height:28%;min-height:24px;display:flex;align-items:center;overflow:hidden;background:rgba(0,0,0,0.65);';
 
                     const inner = document.createElement('div');
-                    inner.style.cssText = `white-space:nowrap;font-size:${fs};color:#f5f5f5;font-weight:500;will-change:transform;`;
+                    inner.style.cssText = `display:inline-flex;align-items:center;line-height:1;white-space:nowrap;font-size:${fs};color:#f5f5f5;font-weight:500;will-change:transform;`;
                     inner.textContent   = text + '  •  ' + text + '  •  '; // doubled for seamless loop
-                    bar.appendChild(inner);
+                    track.appendChild(inner);
+                    bar.appendChild(track);
                     el.appendChild(bar);
 
                     // Animate after layout
                     requestAnimationFrame(() => {
                         const w      = inner.scrollWidth / 2;
-                        const startX = bar.clientWidth || el.clientWidth || 0;
+                        const startX = track.clientWidth || bar.clientWidth || el.clientWidth || 0;
                         const endX   = -w;
                         const px_s   = 40 + speed * 20;
                         const dur_ms = ((startX + w) / px_s) * 1000;
@@ -1012,6 +1051,50 @@
             if (!url) return null;
             const m = url.match(/(?:youtu\.be\/|v=|\/embed\/)([A-Za-z0-9_-]{11})/);
             return m ? m[1] : null;
+        },
+
+        _styleRichTextContent(wrap) {
+            wrap.querySelectorAll('*').forEach((el) => {
+                el.style.maxWidth = '100%';
+                el.style.overflowWrap = 'anywhere';
+                el.style.wordBreak = 'break-word';
+                el.style.whiteSpace = 'normal';
+            });
+
+            wrap.querySelectorAll('h1').forEach((el) => {
+                el.style.fontSize = 'clamp(22px, 4.5cqi, 40px)';
+                el.style.lineHeight = '1.1';
+                el.style.fontWeight = '700';
+                el.style.color = '#ffffff';
+                el.style.margin = '0 0 0.35em';
+            });
+
+            wrap.querySelectorAll('h2').forEach((el) => {
+                el.style.fontSize = 'clamp(18px, 3.6cqi, 30px)';
+                el.style.lineHeight = '1.15';
+                el.style.fontWeight = '600';
+                el.style.color = '#f4f4f5';
+                el.style.margin = '0 0 0.4em';
+            });
+
+            wrap.querySelectorAll('p, div').forEach((el) => {
+                el.style.margin = '0 0 0.45em';
+            });
+
+            wrap.querySelectorAll('ul, ol').forEach((el) => {
+                el.style.margin = '0 0 0.6em';
+                el.style.paddingLeft = '1.2em';
+            });
+
+            wrap.querySelectorAll('li').forEach((el) => {
+                el.style.margin = '0 0 0.2em';
+            });
+
+            const last = wrap.lastElementChild;
+
+            if (last) {
+                last.style.marginBottom = '0';
+            }
         },
             }));
         };
