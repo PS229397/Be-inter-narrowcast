@@ -63,6 +63,7 @@ class LayoutResource extends Resource
                         ->options(Orientation::class)
                         ->default(Orientation::Landscape)
                         ->required()
+                        ->live()
                         ->disabledOn('edit')
                         ->helperText('Locked after creation.'),
                 ]),
@@ -81,7 +82,7 @@ class LayoutResource extends Resource
                 ->columnSpanFull()
                 ->schema([
                     LayoutBuilder::make('grid')
-                        ->default([])
+                        ->default(LayoutBuilder::emptyGrid())
                         ->orientation(fn (Get $get): mixed => $get('orientation'))
                         ->helperText('Grid editing is intentionally deferred for this sprint.'),
                 ]),

@@ -13,6 +13,20 @@ class LayoutBuilder extends Field
 
     protected string | Closure | null $orientation = null;
 
+    /**
+     * @return array<string, mixed>
+     */
+    public static function emptyGrid(): array
+    {
+        return [
+            'id' => 'root',
+            'direction' => null,
+            'split' => 50,
+            'children' => [],
+            'component' => null,
+        ];
+    }
+
     public function orientation(string | Closure | null $orientation): static
     {
         $this->orientation = $orientation;

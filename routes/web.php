@@ -10,9 +10,7 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-Route::get('/test', function () {
-    return view('test');
-});
+Route::get('/test', fn () => view('test'));
 
 Route::post('/app/impersonation/end', function (Request $request) {
     $adminId = $request->session()->pull('admin_impersonator_id');
