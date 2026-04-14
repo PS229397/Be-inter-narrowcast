@@ -2,7 +2,7 @@
 
 namespace App\Livewire;
 
-use App\Filament\Forms\Components\LayoutBuilder;
+use App\Filament\Layouts\LayoutBuilderField as LayoutBuilder;
 use App\Models\Customer;
 use App\Models\CustomComponent;
 use App\Models\Layout;

@@ -2,10 +2,11 @@
 
 namespace App\Filament\Forms\Components;
 
+use App\Filament\Layouts\LayoutBuilderField;
 use App\Models\Layout;
 use Closure;
 
-class SlideCanvas extends LayoutBuilder
+class SlideCanvas extends LayoutBuilderField
 {
     protected string $view = 'filament.forms.components.slide-canvas';
 

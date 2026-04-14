@@ -3,7 +3,12 @@
     "allow": [
       "Bash(grep:*)",
       "Bash(npm install:*)",
-      "Bash(php artisan:*)"
+      "Bash(php artisan:*)",
+      "Bash(mkdir -p resources/views/filament/layouts/partials)",
+      "Bash(cp resources/views/filament/forms/components/layout-builder.blade.php resources/views/filament/layouts/layout-builder-field.blade.php)",
+      "Bash(cp resources/views/filament/forms/components/partials/layout-builder-canvas.blade.php resources/views/filament/layouts/partials/layout-builder-canvas.blade.php)",
+      "Bash(cp resources/views/filament/forms/components/partials/layout-builder-panel.blade.php resources/views/filament/layouts/partials/layout-builder-panel.blade.php)",
+      "Bash(php -r \"require 'vendor/autoload.php'; echo class_exists\\('App\\\\Filament\\\\Layouts\\\\LayoutBuilderField'\\) ? 'OK' : 'MISSING';\")"
     ]
   }
 }

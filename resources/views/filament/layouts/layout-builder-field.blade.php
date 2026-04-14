@@ -170,14 +170,14 @@
                 class="contents"
                 {{ $builderExtraAttrs }}
             >
-                @include('filament.forms.components.partials.layout-builder-canvas', [
+                @include('filament.layouts.partials.layout-builder-canvas', [
                     'sectionClass' => 'relative w-full rounded-xl border border-white/8 bg-[#1c1c21] shadow-xl xl:row-span-2 xl:h-[1000px] xl:w-[1000px]',
                     'innerClass' => 'grid h-full place-items-center p-4 sm:p-5',
                     'stageStyle' => "max-width: {$standaloneCanvasW}; aspect-ratio: {$canvasRatio};",
                     'stageClass' => 'relative isolate w-full overflow-hidden rounded-xl border border-dashed border-amber-400/20 bg-[#111114] shadow-2xl',
                 ])
 
-                @include('filament.forms.components.partials.layout-builder-panel', [
+                @include('filament.layouts.partials.layout-builder-panel', [
                     'asideClass' => 'min-h-0 rounded-xl border border-white/8 bg-[#1c1c21] shadow-xl xl:col-start-2 xl:row-start-2 xl:w-[420px] flex h-full flex-col',
                 ])
             </div>
@@ -196,21 +196,21 @@
             {{ $builderExtraAttrs }}
         >
             <div class="grid gap-5" style="grid-template-columns: 1fr 280px;">
-                @include('filament.forms.components.partials.layout-builder-canvas', [
+                @include('filament.layouts.partials.layout-builder-canvas', [
                     'sectionClass' => 'relative overflow-hidden rounded-xl border border-white/8 bg-[#1c1c21] shadow-xl',
                     'innerClass' => 'flex min-h-[420px] items-center justify-center p-4',
                     'stageStyle' => "aspect-ratio: {$canvasRatio}; max-width: {$canvasMaxW}; max-height: {$canvasMaxH};",
                     'stageClass' => 'relative isolate w-full overflow-hidden rounded-xl border border-dashed border-amber-400/20 bg-[#111114] shadow-2xl',
                 ])
 
-                @include('filament.forms.components.partials.layout-builder-panel', [
+                @include('filament.layouts.partials.layout-builder-panel', [
                     'asideClass' => 'flex flex-col rounded-xl border border-white/8 bg-[#1c1c21] shadow-xl',
                 ])
             </div>
         </div>
     @endif
 
-    @once
+    @script
     <script>
     (() => {
         const register = () => {
@@ -1042,5 +1042,5 @@
         register();
     })();
     </script>
-    @endonce
+    @endscript
 </x-dynamic-component>

@@ -3,7 +3,7 @@
 namespace App\Filament\Resources\Layouts\Schemas;
 
 use App\Enums\Orientation;
-use App\Filament\Forms\Components\LayoutBuilderField;
+use App\Filament\Layouts\LayoutBuilderField;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Section;

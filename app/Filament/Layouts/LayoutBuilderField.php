@@ -1,15 +1,15 @@
 <?php
 
-namespace App\Filament\Forms\Components;
+namespace App\Filament\Layouts;
 
 use BackedEnum;
 use Closure;
 use Filament\Forms\Components\Field;
 use UnitEnum;
 
-class LayoutBuilder extends Field
+class LayoutBuilderField extends Field
 {
-    protected string $view = 'filament.forms.components.layout-builder';
+    protected string $view = 'filament.layouts.layout-builder-field';
 
     protected string | Closure | null $orientation = null;
 
