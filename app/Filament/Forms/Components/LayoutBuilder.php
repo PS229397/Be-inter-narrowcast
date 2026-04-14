@@ -13,6 +13,13 @@ class LayoutBuilder extends Field
 
     protected string | Closure | null $orientation = null;
 
+    protected bool | Closure $standalone = false;
+
+    /**
+     * @var array<int|string, string> | Closure
+     */
+    protected array | Closure $customerOptions = [];
+
     /**
      * @return array<string, mixed>
      */
@@ -34,6 +41,23 @@ class LayoutBuilder extends Field
         return $this;
     }
 
+    public function standalone(bool | Closure $condition = true): static
+    {
+        $this->standalone = $condition;
+
+        return $this;
+    }
+
+    /**
+     * @param  array<int|string, string> | Closure  $options
+     */
+    public function customerOptions(array | Closure $options): static
+    {
+        $this->customerOptions = $options;
+
+        return $this;
+    }
+
     public function getOrientation(): ?string
     {
         $orientation = $this->evaluate($this->orientation);
@@ -47,5 +71,21 @@ class LayoutBuilder extends Field
         }
 
         return filled($orientation) ? (string) $orientation : null;
+    }
+
+    public function isStandalone(): bool
+    {
+        return (bool) $this->evaluate($this->standalone);
+    }
+
+    /**
+     * @return array<int|string, string>
+     */
+    public function getCustomerOptions(): array
+    {
+        /** @var array<int|string, string> $options */
+        $options = $this->evaluate($this->customerOptions);
+
+        return $options;
     }
 }

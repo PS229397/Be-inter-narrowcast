@@ -1,163 +1,210 @@
 <x-dynamic-component :component="$getFieldWrapperView()" :field="$field">
     @php
-        $statePath   = $getStatePath();
-        $orientation = $getOrientation() ?? 'landscape';
-        $isPortrait  = $orientation === 'portrait';
-        $canvasRatio = $isPortrait ? '540 / 940' : '940 / 540';
-        $canvasMaxW  = $isPortrait ? '360px' : '100%';
-        $canvasMaxH  = $isPortrait ? '640px' : '520px';
+        $statePath            = $getStatePath();
+        $orientation          = $getOrientation() ?? 'landscape';
+        $isPortrait           = $orientation === 'portrait';
+        $isStandalone         = $isStandalone();
+        $customerOptions      = $getCustomerOptions();
+        $canvasRatio          = $isPortrait ? '540 / 940' : '940 / 540';
+        $canvasMaxW           = $isPortrait ? '360px' : '100%';
+        $canvasMaxH           = $isPortrait ? '640px' : '520px';
+        $standaloneCanvasW    = $isPortrait ? '540px' : '940px';
+        $standaloneCanvasH    = $isPortrait ? '940px' : '540px';
+        $builderExtraAttrs    = $getExtraAttributeBag();
     @endphp
 
-    <div
-        wire:key="layout-builder-{{ md5($statePath) }}-{{ $orientation }}"
-        wire:ignore
-        x-data="layoutBuilder({
-            state:       $wire.{{ $applyStateBindingModifiers("\$entangle('{$statePath}')", isOptimisticallyLive: false) }},
-            orientation: @js($orientation)
-        })"
-        x-init="init()"
-        {{ $getExtraAttributeBag() }}
-    >
-        <div class="grid gap-5" style="grid-template-columns: 1fr 280px;">
-
-            {{-- ─── Canvas ──────────────────────────────────────────────── --}}
-            <section
-                class="relative overflow-hidden rounded-xl border border-white/8 bg-[#1c1c21] shadow-xl"
-                x-on:click="if (!isDragging) { selectedId = null; render(); }"
-            >
-                <div class="flex min-h-[420px] items-center justify-center p-4">
-                    <div
-                        style="aspect-ratio: {{ $canvasRatio }}; max-width: {{ $canvasMaxW }}; max-height: {{ $canvasMaxH }};"
-                        class="relative isolate w-full overflow-hidden rounded-xl border border-dashed border-amber-400/20 bg-[#111114] shadow-2xl"
-                    >
-                        <div x-ref="gridContainer" wire:ignore class="absolute inset-0"></div>
-                    </div>
-                </div>
-
-                {{-- Overlay controls (admin mode only) --}}
-                <div x-ref="canvasOverlay" class="pointer-events-none absolute bottom-5 right-5 z-20 hidden">
-                    <div class="pointer-events-auto flex gap-2.5">
-                        <button x-ref="btnSliceH" type="button" title="Split horizontally"
-                            x-on:click.stop="if (selectedId) slice(selectedId, 'h')"
-                            class="grid size-10 place-items-center rounded-lg border border-amber-400/40 bg-[#1c1c21]/95 text-slate-100 shadow-lg transition hover:border-amber-300 hover:text-amber-300">
-                            <svg class="size-5" viewBox="0 0 20 20" fill="none">
-                                <path d="M3 10H17" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-dasharray="3 3"/>
-                            </svg>
-                        </button>
-                        <button x-ref="btnSliceV" type="button" title="Split vertically"
-                            x-on:click.stop="if (selectedId) slice(selectedId, 'v')"
-                            class="grid size-10 place-items-center rounded-lg border border-amber-400/40 bg-[#1c1c21]/95 text-slate-100 shadow-lg transition hover:border-amber-300 hover:text-amber-300">
-                            <svg class="size-5" viewBox="0 0 20 20" fill="none">
-                                <path d="M10 3V17" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-dasharray="3 3"/>
-                            </svg>
-                        </button>
-                        <button x-ref="btnDelete" type="button" title="Delete section"
-                            x-on:click.stop="if (selectedId) deleteNode(selectedId)"
-                            class="grid size-10 place-items-center rounded-lg border border-red-400/40 bg-red-500/10 text-red-300 shadow-lg transition hover:border-red-300 hover:bg-red-500/20 hover:text-red-200">
-                            <svg class="size-5" viewBox="0 0 20 20" fill="none">
-                                <path d="M7.5 2.75H12.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-                                <path d="M3.75 5.25H16.25" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-                                <path d="M5.75 5.25L6.45 15.1C6.52 16.06 7.31 16.8 8.27 16.8H11.73C12.69 16.8 13.48 16.06 13.55 15.1L14.25 5.25" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                                <path d="M8.5 8.25V13.25M11.5 8.25V13.25" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-                            </svg>
-                        </button>
-                        <button type="button" title="Clear canvas"
-                            x-on:click.stop="clearCanvas()"
-                            class="grid size-10 place-items-center rounded-lg border border-red-400/40 bg-red-500/10 text-red-300 shadow-lg transition hover:border-red-300 hover:bg-red-500/20 hover:text-red-200">
-                            <svg class="size-5" viewBox="0 0 20 20" fill="none">
-                                <g opacity="0.8">
-                                    <path d="M3 5V2.75H6.25M8.5 2.75H11M13.25 2.75H15.75V5M3 7.5V10.25M3 12.75V15.25H5.5M8 15.25H10.25M15.75 7.5V8.75" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                                </g>
-                                <path d="M12.25 7.75H14.75M10.5 9.75H16.75" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-                                <path d="M11.4 9.75L11.8 16.1C11.84 16.69 12.34 17.15 12.93 17.15H14.07C14.66 17.15 15.16 16.69 15.2 16.1L15.6 9.75" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                                <path d="M13.1 11.5V14.6M13.9 11.5V14.6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-                            </svg>
-                        </button>
-                    </div>
-                </div>
-            </section>
-
-            {{-- ─── Right panel ─────────────────────────────────────────── --}}
-            <aside
-                class="flex flex-col rounded-xl border border-white/8 bg-[#1c1c21] shadow-xl"
-                x-on:click.stop
-            >
-                {{-- ── Admin: component picker ── --}}
-                <div x-show="viewMode === 'admin'" class="flex flex-1 flex-col gap-4 overflow-y-auto p-4">
-                    <p class="text-sm font-medium text-zinc-400">Base components</p>
-                    <div class="grid grid-cols-3 gap-2">
-                        @foreach([
-                            ['text',      'Text',      '<path d="M5 5h10M10 5v10M7 15h6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>'],
-                            ['image',     'Image',     '<rect x="2" y="4" width="16" height="12" rx="2" stroke="currentColor" stroke-width="1.5"/><circle cx="7.5" cy="8.5" r="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M2 13.5l4-4 3 3 2.5-2.5 4.5 4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>'],
-                            ['video',     'Video',     '<rect x="2" y="5" width="12" height="10" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M14 8.5l4-2v5l-4-2V8.5z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>'],
-                            ['carousel',  'Carousel',  '<rect x="1" y="6" width="4" height="7" rx="1" stroke="currentColor" stroke-width="1.5" opacity="0.4"/><rect x="6" y="3" width="8" height="11" rx="1.5" stroke="currentColor" stroke-width="1.5"/><rect x="15" y="6" width="4" height="7" rx="1" stroke="currentColor" stroke-width="1.5" opacity="0.4"/><circle cx="8.5" cy="17.5" r="0.75" fill="currentColor"/><circle cx="10" cy="17.5" r="0.75" fill="currentColor"/><circle cx="11.5" cy="17.5" r="0.75" fill="currentColor"/>'],
-                            ['ticker',    'Ticker',    '<rect x="2" y="7" width="16" height="6" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M5 10h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M13 8.5l2.5 1.5-2.5 1.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>'],
-                            ['clock',     'Clock',     '<circle cx="10" cy="10" r="7.5" stroke="currentColor" stroke-width="1.5"/><path d="M10 6v4l2.5 2.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>'],
-                            ['weather',   'Weather',   '<circle cx="10" cy="8.5" r="3" stroke="currentColor" stroke-width="1.5"/><path d="M10 3v1M10 14v1M3.5 8.5h1M15.5 8.5h1M5.6 4.6l.7.7M13.7 4.6l-.7.7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M5 16a3 3 0 010-6h.5a4 4 0 017 0H13a3 3 0 010 6H5z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>'],
-                            ['countdown', 'Countdown', '<circle cx="10" cy="11" r="7" stroke="currentColor" stroke-width="1.5"/><path d="M10 8v3l-2.5 2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 3h4M10 1v2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>'],
-                            ['qr',        'QR Code',   '<rect x="3" y="3" width="5" height="5" rx="0.5" stroke="currentColor" stroke-width="1.5"/><rect x="12" y="3" width="5" height="5" rx="0.5" stroke="currentColor" stroke-width="1.5"/><rect x="3" y="12" width="5" height="5" rx="0.5" stroke="currentColor" stroke-width="1.5"/><rect x="4.5" y="4.5" width="2" height="2" fill="currentColor"/><rect x="13.5" y="4.5" width="2" height="2" fill="currentColor"/><rect x="4.5" y="13.5" width="2" height="2" fill="currentColor"/><path d="M12 12h2v2h-2zM14 14h2v2h-2zM12 16h2M16 12v2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>'],
-                        ] as [$type, $label, $icon])
-                            <button
-                                data-component="{{ $type }}"
-                                type="button"
-                                x-on:click.stop="assignComponent('{{ $type }}')"
-                                class="flex aspect-square flex-col items-center justify-center gap-1.5 rounded-xl border border-white/10 bg-[#24242a] text-zinc-400 transition hover:border-amber-400/40 hover:text-amber-300"
+    @if ($isStandalone)
+        <div class="mx-auto grid w-full grid-cols-1 gap-[20px] xl:grid-cols-[1000px_420px] xl:grid-rows-[230px_minmax(0,1fr)] xl:items-center xl:justify-center">
+            <div x-data="{}" class="rounded-xl border border-white/8 bg-[#1c1c21] p-4 shadow-xl sm:p-5 xl:col-start-2 xl:row-start-1 xl:h-[230px] xl:w-[420px] xl:p-5">
+                <div class="grid h-full grid-rows-[auto_auto_1fr] gap-5">
+                    <div class="grid gap-4 sm:grid-cols-2">
+                        <label class="grid gap-2">
+                            <span class="text-sm font-medium text-zinc-200">Title</span>
+                            <input
+                                type="text"
+                                wire:model.live="title"
+                                placeholder="Untitled layout"
+                                class="h-11 rounded-xl border border-white/10 bg-[#111114] px-4 text-sm text-white outline-none transition placeholder:text-zinc-600 focus:border-amber-400/60"
                             >
-                                <svg class="size-6" viewBox="0 0 20 20" fill="none" aria-hidden="true">{!! $icon !!}</svg>
-                                <span class="text-xs">{{ $label }}</span>
+                        </label>
+
+                        <label class="grid gap-2">
+                            <span class="text-sm font-medium text-zinc-200">Orientation</span>
+                            <div class="relative">
+                                <select
+                                    wire:model.live="orientation"
+                                    x-bind:disabled="$wire.layoutId !== null"
+                                    class="h-11 w-full appearance-none rounded-xl border border-white/10 bg-[#111114] px-4 pr-11 text-sm text-white outline-none transition focus:border-amber-400/60 disabled:cursor-not-allowed disabled:opacity-50"
+                                >
+                                    <option value="landscape">Landscape</option>
+                                    <option value="portrait">Portrait</option>
+                                </select>
+                                <svg class="pointer-events-none absolute right-4 top-1/2 size-4 -translate-y-1/2 text-zinc-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                    <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 11.168l3.71-3.938a.75.75 0 1 1 1.08 1.04l-4.25 4.51a.75.75 0 0 1-1.08 0l-4.25-4.51a.75.75 0 0 1 .02-1.06Z" clip-rule="evenodd" />
+                                </svg>
+                            </div>
+                        </label>
+                    </div>
+
+                    <div class="grid items-end gap-4 sm:grid-cols-2">
+                        <div
+                            x-data="{
+                                open: false,
+                                ids() {
+                                    return (Array.isArray($wire.customerIds) ? $wire.customerIds : []).map((id) => String(id));
+                                },
+                                summary() {
+                                    const ids = this.ids();
+                                    const options = @js(collect($customerOptions)->mapWithKeys(fn ($name, $id) => [(string) $id => $name])->all());
+
+                                    if (! ids.length) {
+                                        return 'All customers';
+                                    }
+
+                                    if (ids.length === 1) {
+                                        return options[ids[0]] ?? '1 customer';
+                                    }
+
+                                    return `${ids.length} customers`;
+                                },
+                                toggle(id) {
+                                    const stringId = String(id);
+                                    const ids = this.ids();
+                                    const next = ids.includes(stringId)
+                                        ? ids.filter((value) => value !== stringId)
+                                        : [...ids, stringId];
+
+                                    $wire.customerIds = next.map((value) => Number(value));
+                                },
+                                clear() {
+                                    $wire.customerIds = [];
+                                },
+                            }"
+                            x-on:click.outside="open = false"
+                            class="relative grid gap-2"
+                        >
+                            <span class="text-sm font-medium text-zinc-200">Customer</span>
+                            <button
+                                type="button"
+                                x-on:click="open = ! open"
+                                class="flex h-11 w-full items-center justify-between rounded-xl border border-white/10 bg-[#111114] px-4 text-sm text-white outline-none transition hover:border-white/20"
+                            >
+                                <span class="truncate" x-text="summary()"></span>
+                                <svg class="size-4 text-zinc-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                    <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 11.168l3.71-3.938a.75.75 0 1 1 1.08 1.04l-4.25 4.51a.75.75 0 0 1-1.08 0l-4.25-4.51a.75.75 0 0 1 .02-1.06Z" clip-rule="evenodd" />
+                                </svg>
                             </button>
-                        @endforeach
+
+                            <div
+                                x-cloak
+                                x-show="open"
+                                class="absolute left-0 right-0 top-full z-30 mt-2 rounded-xl border border-white/10 bg-[#111114] p-2 shadow-2xl"
+                            >
+                                <button
+                                    type="button"
+                                    x-on:click="clear(); open = false"
+                                    class="mb-2 flex w-full items-center rounded-lg px-3 py-2 text-left text-sm text-zinc-300 transition hover:bg-white/5 hover:text-white"
+                                >
+                                    All customers
+                                </button>
+
+                                <div class="max-h-48 space-y-1 overflow-y-auto">
+                                    @foreach ($customerOptions as $id => $name)
+                                        <label class="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-sm text-zinc-300 transition hover:bg-white/5 hover:text-white">
+                                            <input
+                                                type="checkbox"
+                                                class="h-4 w-4 rounded border-white/15 bg-transparent text-amber-400 focus:ring-amber-400/40"
+                                                x-bind:checked="ids().includes(@js((string) $id))"
+                                                x-on:change="toggle(@js((string) $id))"
+                                            >
+                                            <span class="truncate">{{ $name }}</span>
+                                        </label>
+                                    @endforeach
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex gap-2">
+                            <button
+                                wire:click="save"
+                                wire:loading.attr="disabled"
+                                type="button"
+                                class="h-11 flex-1 rounded-xl border border-amber-400/40 bg-amber-500/10 text-sm font-medium text-amber-300 transition hover:border-amber-300 hover:bg-amber-500/20 disabled:opacity-50"
+                            >
+                                <span wire:loading.remove wire:target="save" x-text="$wire.layoutId ? 'Save' : 'Create'"></span>
+                                <span wire:loading wire:target="save">Saving…</span>
+                            </button>
+
+                            <a
+                                href="/test"
+                                x-cloak
+                                x-show="$wire.layoutId"
+                                class="grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-white/10 bg-[#111114] text-zinc-400 transition hover:border-white/20 hover:text-white"
+                                title="New layout"
+                            >
+                                <svg class="size-4" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                                    <path d="M10 4v12M4 10h12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                                </svg>
+                            </a>
+                        </div>
                     </div>
-                </div>
 
-                {{-- ── Customer: content input panel ── --}}
-                <div x-show="viewMode === 'customer'" class="flex flex-1 flex-col gap-2 overflow-y-auto p-4">
-
-                    {{-- Nothing selected --}}
-                    <p x-show="!selectedId" class="text-sm text-zinc-500">
-                        Select a section in the layout to edit its content.
+                    <p class="self-end text-xs text-zinc-500">
+                        Leave customer empty to make the layout available to all customers.
                     </p>
-
-                    {{-- Selected but no component --}}
-                    <p x-show="selectedId && !getSelectedLeafComponent()" class="text-sm text-zinc-500">
-                        No component assigned. Switch to Admin view to assign one.
-                    </p>
-
-                    {{-- Per-component input panels --}}
-                    @include('filament.forms.components.base-components.text')
-                    @include('filament.forms.components.base-components.image')
-                    @include('filament.forms.components.base-components.video')
-                    @include('filament.forms.components.base-components.carousel')
-                    @include('filament.forms.components.base-components.ticker')
-                    @include('filament.forms.components.base-components.clock')
-                    @include('filament.forms.components.base-components.weather')
-                    @include('filament.forms.components.base-components.countdown')
-                    @include('filament.forms.components.base-components.qr')
                 </div>
+            </div>
 
-                {{-- ── View toggle (footer) ── --}}
-                <div class="shrink-0 border-t border-white/8 p-4">
-                    <div class="flex gap-2">
-                        <button type="button"
-                            data-view-toggle
-                            :data-active="viewMode === 'admin' ? 'true' : 'false'"
-                            x-on:click="viewMode = 'admin'; render()"
-                            class="h-9 flex-1 rounded-xl border text-sm font-medium transition">
-                            Admin
-                        </button>
-                        <button type="button"
-                            data-view-toggle
-                            :data-active="viewMode === 'customer' ? 'true' : 'false'"
-                            x-on:click="viewMode = 'customer'; render()"
-                            class="h-9 flex-1 rounded-xl border text-sm font-medium transition">
-                            Customer
-                        </button>
-                    </div>
-                </div>
-            </aside>
+            <div
+                wire:key="layout-builder-{{ md5($statePath) }}-{{ $orientation }}"
+                wire:ignore
+                x-data="layoutBuilder({
+                    state:       $wire.{{ $applyStateBindingModifiers("\$entangle('{$statePath}')", isOptimisticallyLive: false) }},
+                    orientation: @js($orientation),
+                    standalone:  true
+                })"
+                x-init="init()"
+                class="contents"
+                {{ $builderExtraAttrs }}
+            >
+                @include('filament.forms.components.partials.layout-builder-canvas', [
+                    'sectionClass' => 'relative w-full rounded-xl border border-white/8 bg-[#1c1c21] shadow-xl xl:row-span-2 xl:h-[1000px] xl:w-[1000px]',
+                    'innerClass' => 'grid h-full place-items-center p-4 sm:p-5',
+                    'stageStyle' => "max-width: {$standaloneCanvasW}; aspect-ratio: {$canvasRatio};",
+                    'stageClass' => 'relative isolate w-full overflow-hidden rounded-xl border border-dashed border-amber-400/20 bg-[#111114] shadow-2xl',
+                ])
 
+                @include('filament.forms.components.partials.layout-builder-panel', [
+                    'asideClass' => 'min-h-0 rounded-xl border border-white/8 bg-[#1c1c21] shadow-xl xl:col-start-2 xl:row-start-2 xl:w-[420px] flex h-full flex-col',
+                ])
+            </div>
         </div>
-    </div>
+    @else
+        <div
+            wire:key="layout-builder-{{ md5($statePath) }}-{{ $orientation }}"
+            wire:ignore
+            x-data="layoutBuilder({
+                state:       $wire.{{ $applyStateBindingModifiers("\$entangle('{$statePath}')", isOptimisticallyLive: false) }},
+                orientation: @js($orientation),
+                standalone:  false
+            })"
+            x-init="init()"
+            {{ $builderExtraAttrs }}
+        >
+            <div class="grid gap-5" style="grid-template-columns: 1fr 280px;">
+                @include('filament.forms.components.partials.layout-builder-canvas', [
+                    'sectionClass' => 'relative overflow-hidden rounded-xl border border-white/8 bg-[#1c1c21] shadow-xl',
+                    'innerClass' => 'flex min-h-[420px] items-center justify-center p-4',
+                    'stageStyle' => "aspect-ratio: {$canvasRatio}; max-width: {$canvasMaxW}; max-height: {$canvasMaxH};",
+                    'stageClass' => 'relative isolate w-full overflow-hidden rounded-xl border border-dashed border-amber-400/20 bg-[#111114] shadow-2xl',
+                ])
+
+                @include('filament.forms.components.partials.layout-builder-panel', [
+                    'asideClass' => 'flex flex-col rounded-xl border border-white/8 bg-[#1c1c21] shadow-xl',
+                ])
+            </div>
+        </div>
+    @endif
 
     @once
     <script>

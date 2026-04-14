@@ -72,6 +72,8 @@ class LayoutBuilderTest extends Component implements HasForms
             ->statePath('data')
             ->components([
                 LayoutBuilder::make('grid')
+                    ->standalone()
+                    ->customerOptions(fn (): array => $this->getCustomerOptions())
                     ->orientation(fn (): string => $this->orientation)
                     ->hiddenLabel(),
             ]);
