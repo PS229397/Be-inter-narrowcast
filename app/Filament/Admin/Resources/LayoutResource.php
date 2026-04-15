@@ -6,20 +6,17 @@ use App\Enums\Orientation;
 use App\Filament\Admin\Resources\LayoutResource\Pages\CreateLayout;
 use App\Filament\Admin\Resources\LayoutResource\Pages\EditLayout;
 use App\Filament\Admin\Resources\LayoutResource\Pages\ListLayouts;
-use App\Filament\Admin\Resources\LayoutResource\Pages\ViewLayout;
 use App\Filament\Layouts\LayoutBuilderField;
 use App\Models\CustomComponent;
 use App\Models\Customer;
 use App\Models\Layout;
 use BackedEnum;
 use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
-use Filament\Actions\ViewAction;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
-use Filament\Infolists\Components\TextEntry;
-use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
@@ -87,7 +84,6 @@ class LayoutResource extends Resource
                 ->titleStatePath('data.title')
                 ->orientationStatePath('data.orientation')
                 ->customersStatePath('data.customers')
-                ->createUrl(fn (): string => static::getUrl('create'))
                 ->cancelUrl(fn (): string => static::getUrl('index'))
                 ->customerOptions(
                     fn (): array => Customer::query()
@@ -127,18 +123,6 @@ class LayoutResource extends Resource
         ]);
     }
 
-    public static function infolist(Schema $schema): Schema
-    {
-        return $schema->components([
-            Section::make('Layout Details')
-                ->columns(2)
-                ->schema([
-                    TextEntry::make('title'),
-                    TextEntry::make('orientation')->badge(),
-                ]),
-        ]);
-    }
-
     public static function table(Table $table): Table
     {
         return $table
@@ -154,10 +138,6 @@ class LayoutResource extends Resource
                     ->label('Customers')
                     ->sortable()
                     ->formatStateUsing(fn (string|int|null $state): string => (int) $state === 0 ? 'All customers' : (string) $state),
-            TextColumn::make('slides_count')
-                    ->counts('slides')
-                    ->label('Slides')
-                    ->sortable(),
                 TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
@@ -168,8 +148,8 @@ class LayoutResource extends Resource
                     ->options(Orientation::class),
             ])
             ->recordActions([
-                ViewAction::make(),
                 EditAction::make(),
+                DeleteAction::make(),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
@@ -183,7 +163,6 @@ class LayoutResource extends Resource
         return [
             'index' => ListLayouts::route('/'),
             'create' => CreateLayout::route('/create'),
-            'view' => ViewLayout::route('/{record}'),
             'edit' => EditLayout::route('/{record}/edit'),
         ];
     }

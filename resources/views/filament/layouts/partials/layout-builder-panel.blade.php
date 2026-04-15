@@ -1,8 +1,29 @@
+<style>
+.layout-panel-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: #f59e0b transparent;
+}
+.layout-panel-scroll::-webkit-scrollbar {
+    width: 6px;
+}
+.layout-panel-scroll::-webkit-scrollbar-track {
+    background: transparent;
+    border-radius: 0 0.75rem 0.75rem 0;
+}
+.layout-panel-scroll::-webkit-scrollbar-thumb {
+    background-color: #f59e0b;
+    border-radius: 3px;
+}
+.layout-panel-scroll::-webkit-scrollbar-thumb:hover {
+    background-color: #fbbf24;
+}
+</style>
+
 <aside
     class="{{ $asideClass }}"
     x-on:click.stop
 >
-    <div x-data="{ baseOpen: true }" class="flex flex-1 flex-col gap-4 overflow-y-auto p-4">
+    <div x-data="{ baseOpen: true }" class="layout-panel-scroll flex flex-1 flex-col gap-4 overflow-y-scroll p-4">
         <section class="rounded-xl border border-white/8 bg-[#111114]">
             <button
                 type="button"

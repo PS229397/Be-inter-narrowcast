@@ -44,7 +44,7 @@
         >
             {{-- Heading above canvas --}}
             <h1
-                class="text-xl font-bold text-white"
+                class="text-3xl font-bold text-white"
                 x-text="(isEditing ? 'Edit ' : 'Create ') + (pageTitle || 'Untitled layout')"
             ></h1>
 
@@ -61,14 +61,14 @@
             <div class="flex h-full w-[380px] shrink-0 flex-col gap-5">
                 <div x-data="{}" class="shrink-0 rounded-xl border border-white/8 bg-[#1c1c21] p-4 shadow-xl sm:p-5">
                     <div class="grid gap-5">
-                        <div class="grid gap-5 sm:grid-cols-2">
+                        <div class="grid gap-[10px] sm:grid-cols-2">
                             <label class="grid gap-2">
                                 <span class="text-sm font-medium text-zinc-200">Title</span>
                                 <input
                                     type="text"
                                     wire:model.live="{{ $titleStatePath }}"
                                     placeholder="Untitled layout"
-                                    class="h-11 rounded-xl border border-white/10 bg-[#111114] px-4 text-sm text-white outline-none transition placeholder:text-zinc-600 focus:border-amber-400/60"
+                                    class="h-11 w-full rounded-xl border border-white/10 bg-[#111114] px-4 text-sm text-white outline-none transition placeholder:text-zinc-600 focus:border-amber-400/60"
                                 >
                             </label>
 
@@ -191,23 +191,9 @@
                                     <span wire:loading wire:target="{{ $submitAction }}">{{ $isEditing ? 'Saving…' : 'Creating…' }}</span>
                                 </button>
 
-                                @if ($isEditing && filled($createUrl))
-                                    <a
-                                        href="{{ $createUrl }}"
-                                        class="grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-white/10 bg-[#111114] text-zinc-400 transition hover:border-white/20 hover:text-white"
-                                        title="New layout"
-                                    >
-                                        <svg class="size-4" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-                                            <path d="M10 4v12M4 10h12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-                                        </svg>
-                                    </a>
-                                @endif
                             </div>
                         </div>
 
-                        <p class="text-xs text-zinc-500">
-                            Leave customer empty to make the layout available to all customers.
-                        </p>
                     </div>
                 </div>
 
