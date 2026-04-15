@@ -106,11 +106,5 @@
                 </p>
             @endif
         </section>
-
-        <p
-            x-show="selectedId"
-            class="rounded-xl border border-white/8 bg-[#111114] px-3 py-2 text-xs text-zinc-500"
-            x-text="`Selected section: ${selectedId}`"
-        ></p>
     </div>
 </aside>
