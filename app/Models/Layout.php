@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\Orientation;
+use App\Support\Layouts\LayoutGrid;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -53,6 +54,10 @@ class Layout extends Model
 
     protected static function booted(): void
     {
+        static::saving(function (self $layout): void {
+            $layout->grid = LayoutGrid::normalize($layout->grid);
+        });
+
         static::updating(function (self $layout): void {
             if ($layout->isDirty('orientation')) {
                 $layout->orientation = $layout->getOriginal('orientation');

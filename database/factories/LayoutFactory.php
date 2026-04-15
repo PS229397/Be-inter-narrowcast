@@ -2,7 +2,9 @@
 
 namespace Database\Factories;
 
+use App\Enums\Orientation;
 use App\Models\Layout;
+use App\Support\Layouts\LayoutGrid;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -18,7 +20,9 @@ class LayoutFactory extends Factory
     public function definition(): array
     {
         return [
-            //
+            'title' => fake()->words(3, true),
+            'orientation' => fake()->randomElement(Orientation::cases()),
+            'grid' => LayoutGrid::empty(),
         ];
     }
 }

@@ -2,6 +2,8 @@
 
 namespace App\Filament\Layouts;
 
+use App\Rules\ValidLayoutGrid;
+use App\Support\Layouts\LayoutGrid;
 use BackedEnum;
 use Closure;
 use Filament\Forms\Components\Field;
@@ -11,114 +13,111 @@ class LayoutBuilderField extends Field
 {
     protected string $view = 'filament.layouts.layout-builder-field';
 
-    protected string | Closure | null $orientation = null;
+    protected string|Closure|null $orientation = null;
 
-    protected string | Closure | null $titleStatePath = null;
+    protected string|Closure|null $titleStatePath = null;
 
-    protected string | Closure | null $orientationStatePath = null;
+    protected string|Closure|null $orientationStatePath = null;
 
-    protected string | Closure | null $customersStatePath = null;
+    protected string|Closure|null $customersStatePath = null;
 
-    protected string | Closure | null $submitAction = null;
+    protected string|Closure|null $submitAction = null;
 
-    protected string | Closure | null $submitFormId = null;
+    protected string|Closure|null $submitFormId = null;
 
-    protected string | Closure | null $createUrl = null;
+    protected string|Closure|null $cancelUrl = null;
 
-    protected string | Closure | null $cancelUrl = null;
+    protected bool|Closure $standalone = false;
 
-    protected bool | Closure $standalone = false;
-
-    protected bool | Closure | null $editing = null;
+    protected bool|Closure|null $editing = null;
 
     /**
      * @var array<int|string, string> | Closure
      */
-    protected array | Closure $customerOptions = [];
+    protected array|Closure $customerOptions = [];
 
     /**
      * @var array<int, array<string, mixed>> | Closure
      */
-    protected array | Closure $customComponents = [];
+    protected array|Closure $baseComponents = [];
 
     /**
-     * @return array<string, mixed>
+     * @var array<int, array<string, mixed>> | Closure
      */
-    public static function emptyGrid(): array
+    protected array|Closure $customComponents = [];
+
+    protected function setUp(): void
     {
-        return [
-            'id' => 'root',
-            'direction' => null,
-            'split' => 50,
-            'children' => [],
-            'component' => null,
-        ];
+        parent::setUp();
+
+        $this->default(LayoutGrid::empty());
+        $this->formatStateUsing(fn (mixed $state): array => LayoutGrid::normalize($state));
+        $this->dehydrateStateUsing(fn (mixed $state): array => LayoutGrid::normalize($state));
+        $this->rule(new ValidLayoutGrid);
     }
 
-    public function orientation(string | Closure | null $orientation): static
+    public static function emptyGrid(): array
+    {
+        return LayoutGrid::empty();
+    }
+
+    public function orientation(string|Closure|null $orientation): static
     {
         $this->orientation = $orientation;
 
         return $this;
     }
 
-    public function titleStatePath(string | Closure | null $path): static
+    public function titleStatePath(string|Closure|null $path): static
     {
         $this->titleStatePath = $path;
 
         return $this;
     }
 
-    public function orientationStatePath(string | Closure | null $path): static
+    public function orientationStatePath(string|Closure|null $path): static
     {
         $this->orientationStatePath = $path;
 
         return $this;
     }
 
-    public function customersStatePath(string | Closure | null $path): static
+    public function customersStatePath(string|Closure|null $path): static
     {
         $this->customersStatePath = $path;
 
         return $this;
     }
 
-    public function submitAction(string | Closure | null $action): static
+    public function submitAction(string|Closure|null $action): static
     {
         $this->submitAction = $action;
 
         return $this;
     }
 
-    public function submitFormId(string | Closure | null $id): static
+    public function submitFormId(string|Closure|null $id): static
     {
         $this->submitFormId = $id;
 
         return $this;
     }
 
-    public function createUrl(string | Closure | null $url): static
-    {
-        $this->createUrl = $url;
-
-        return $this;
-    }
-
-    public function cancelUrl(string | Closure | null $url): static
+    public function cancelUrl(string|Closure|null $url): static
     {
         $this->cancelUrl = $url;
 
         return $this;
     }
 
-    public function standalone(bool | Closure $condition = true): static
+    public function standalone(bool|Closure $condition = true): static
     {
         $this->standalone = $condition;
 
         return $this;
     }
 
-    public function editing(bool | Closure $condition = true): static
+    public function editing(bool|Closure $condition = true): static
     {
         $this->editing = $condition;
 
@@ -128,7 +127,7 @@ class LayoutBuilderField extends Field
     /**
      * @param  array<int|string, string> | Closure  $options
      */
-    public function customerOptions(array | Closure $options): static
+    public function customerOptions(array|Closure $options): static
     {
         $this->customerOptions = $options;
 
@@ -138,7 +137,17 @@ class LayoutBuilderField extends Field
     /**
      * @param  array<int, array<string, mixed>> | Closure  $components
      */
-    public function customComponents(array | Closure $components): static
+    public function baseComponents(array|Closure $components): static
+    {
+        $this->baseComponents = $components;
+
+        return $this;
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>> | Closure  $components
+     */
+    public function customComponents(array|Closure $components): static
     {
         $this->customComponents = $components;
 
@@ -216,13 +225,6 @@ class LayoutBuilderField extends Field
         return filled($id) ? (string) $id : null;
     }
 
-    public function getCreateUrl(): ?string
-    {
-        $url = $this->evaluate($this->createUrl);
-
-        return filled($url) ? (string) $url : null;
-    }
-
     public function getCancelUrl(): ?string
     {
         $url = $this->evaluate($this->cancelUrl);
@@ -252,6 +254,17 @@ class LayoutBuilderField extends Field
         $options = $this->evaluate($this->customerOptions);
 
         return $options;
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    public function getBaseComponents(): array
+    {
+        /** @var array<int, array<string, mixed>> $components */
+        $components = $this->evaluate($this->baseComponents);
+
+        return $components;
     }
 
     /**
