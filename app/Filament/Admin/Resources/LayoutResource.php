@@ -7,7 +7,9 @@ use App\Filament\Admin\Resources\LayoutResource\Pages\CreateLayout;
 use App\Filament\Admin\Resources\LayoutResource\Pages\EditLayout;
 use App\Filament\Admin\Resources\LayoutResource\Pages\ListLayouts;
 use App\Filament\Admin\Resources\LayoutResource\Pages\ViewLayout;
-use App\Forms\Components\LayoutBuilder;
+use App\Filament\Layouts\LayoutBuilderField;
+use App\Models\CustomComponent;
+use App\Models\Customer;
 use App\Models\Layout;
 use BackedEnum;
 use Filament\Actions\BulkActionGroup;
@@ -53,38 +55,75 @@ class LayoutResource extends Resource
     public static function form(Schema $schema): Schema
     {
         return $schema->components([
-            Section::make('Layout Details')
-                ->columns(2)
-                ->schema([
-                    TextInput::make('title')
-                        ->required()
-                        ->maxLength(255),
-                    Select::make('orientation')
-                        ->options(Orientation::class)
-                        ->default(Orientation::Landscape)
-                        ->required()
-                        ->disabledOn('edit')
-                        ->helperText('Locked after creation.'),
-                ]),
-            Section::make('Assign to Customers')
-                ->collapsible()
-                ->schema([
-                    Select::make('customers')
-                        ->relationship('customers', 'name')
-                        ->multiple()
-                        ->preload()
-                        ->searchable()
-                        ->label('Assign to Customers')
-                        ->helperText('Leave empty to make this layout available to all customers.'),
-                ]),
-            Section::make('Layout Builder')
+            TextInput::make('title')
+                ->default('Untitled layout')
+                ->required()
+                ->maxLength(255)
+                ->live()
+                ->hidden()
+                ->dehydratedWhenHidden(),
+            Select::make('orientation')
+                ->options(Orientation::class)
+                ->default(Orientation::Landscape)
+                ->required()
+                ->live()
+                ->disabledOn('edit')
+                ->hidden()
+                ->dehydratedWhenHidden(),
+            Select::make('customers')
+                ->relationship('customers', 'name')
+                ->multiple()
+                ->searchable()
+                ->preload()
+                ->live()
+                ->hidden()
+                ->dehydratedWhenHidden()
+                ->saveRelationshipsWhenHidden(),
+            LayoutBuilderField::make('grid')
+                ->standalone()
+                ->editing(fn (string $operation): bool => $operation === 'edit')
+                ->submitAction(fn (string $operation): string => $operation === 'edit' ? 'save' : 'create')
+                ->submitFormId('form')
+                ->titleStatePath('data.title')
+                ->orientationStatePath('data.orientation')
+                ->customersStatePath('data.customers')
+                ->createUrl(fn (): string => static::getUrl('create'))
+                ->cancelUrl(fn (): string => static::getUrl('index'))
+                ->customerOptions(
+                    fn (): array => Customer::query()
+                        ->orderBy('name')
+                        ->pluck('name', 'id')
+                        ->all(),
+                )
+                ->customComponents(function (Get $get): array {
+                    $customerIds = collect((array) ($get('customers') ?? []))
+                        ->filter(fn (mixed $id): bool => filled($id))
+                        ->map(fn (mixed $id): int => (int) $id)
+                        ->values()
+                        ->all();
+
+                    return CustomComponent::query()
+                        ->with('customer:id,name')
+                        ->when(
+                            filled($customerIds),
+                            fn ($query) => $query->whereIn('customer_id', $customerIds),
+                        )
+                        ->orderBy('title')
+                        ->get()
+                        ->map(fn (CustomComponent $component): array => [
+                            'id' => $component->id,
+                            'key' => 'custom:' . $component->id,
+                            'title' => $component->title,
+                            'customer' => $component->customer?->name,
+                        ])
+                        ->values()
+                        ->all();
+                })
+                ->default(LayoutBuilderField::emptyGrid())
+                ->required()
+                ->orientation(fn (Get $get): mixed => $get('orientation'))
                 ->columnSpanFull()
-                ->schema([
-                    LayoutBuilder::make('grid')
-                        ->default([])
-                        ->orientation(fn (Get $get): mixed => $get('orientation'))
-                        ->helperText('Grid editing is intentionally deferred for this sprint.'),
-                ]),
+                ->hiddenLabel(),
         ]);
     }
 

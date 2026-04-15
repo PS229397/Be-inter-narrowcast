@@ -1,7 +1,12 @@
 {
   "permissions": {
     "allow": [
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(git ls-tree:*)",
+      "Bash(git show:*)",
+      "Read(//tmp/**)",
+      "Bash(git checkout:*)",
+      "Bash(php artisan:*)"
     ]
   }
 }
