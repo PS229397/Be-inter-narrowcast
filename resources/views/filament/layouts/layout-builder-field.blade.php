@@ -173,14 +173,10 @@
                                 @endif
 
                                 <button
-                                    @if (filled($submitFormId))
-                                        x-on:click="$wire.{{ $submitAction }}()"
-                                        type="button"
-                                    @else
-                                        wire:click="{{ $submitAction }}"
-                                        type="button"
-                                    @endif
+                                    type="submit"
+                                    form="{{ $submitFormId ?? 'form' }}"
                                     wire:loading.attr="disabled"
+                                    wire:target="{{ $submitAction }}"
                                     class="h-11 flex-1 rounded-xl border border-amber-400/40 bg-amber-500/10 text-sm font-medium text-amber-300 transition hover:border-amber-300 hover:bg-amber-500/20 disabled:opacity-50"
                                 >
                                     <span wire:loading.remove wire:target="{{ $submitAction }}">{{ $isEditing ? 'Save' : 'Create' }}</span>

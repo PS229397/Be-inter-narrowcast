@@ -6,7 +6,9 @@
       "Bash(git show:*)",
       "Read(//tmp/**)",
       "Bash(git checkout:*)",
-      "Bash(php artisan:*)"
+      "Bash(php artisan:*)",
+      "Bash(composer run *)",
+      "Bash(npm run *)"
     ]
   }
 }
