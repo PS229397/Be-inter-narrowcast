@@ -19,6 +19,16 @@ class CreateLayout extends CreateRecord
         return [];
     }
 
+    public function getHeading(): string|\Illuminate\Contracts\Support\Htmlable
+    {
+        return '';
+    }
+
+    public function getBreadcrumbs(): array
+    {
+        return [];
+    }
+
     protected function getRedirectUrl(): string
     {
         return LayoutResource::getUrl('index');

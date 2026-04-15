@@ -33,14 +33,22 @@
                 state:       $wire.{{ $applyStateBindingModifiers("\$entangle('{$statePath}')", isOptimisticallyLive: false) }},
                 orientation: @js($orientation),
                 customComponents: @js($customComponents),
-                standalone:  true
+                standalone:  true,
+                pageTitle:   $wire.{{ $applyStateBindingModifiers("\$entangle('{$titleStatePath}')", isOptimisticallyLive: false) }},
+                isEditing:   @js($isEditing),
             })"
             x-init="init()"
             x-on:layout-builder-orientation.window="orientation = $event.detail.value; $nextTick(() => render())"
-            class="mx-auto flex flex-row items-stretch gap-5"
-            style="height: 1000px;"
+            class="mx-auto flex flex-col gap-3"
             {{ $builderExtraAttrs }}
         >
+            {{-- Heading above canvas --}}
+            <h1
+                class="text-xl font-bold text-white"
+                x-text="(isEditing ? 'Edit ' : 'Create ') + (pageTitle || 'Untitled layout')"
+            ></h1>
+
+            <div class="flex flex-row items-stretch gap-5" style="height: 1000px;">
             @include('filament.layouts.partials.layout-builder-canvas', [
                 'sectionClass' => 'relative shrink-0 overflow-hidden rounded-xl border border-white/8 bg-[#1c1c21] shadow-xl',
                 'sectionStyle' => 'width:1000px;height:1000px;',
@@ -53,7 +61,7 @@
             <div class="flex h-full w-[380px] shrink-0 flex-col gap-5">
                 <div x-data="{}" class="shrink-0 rounded-xl border border-white/8 bg-[#1c1c21] p-4 shadow-xl sm:p-5">
                     <div class="grid gap-5">
-                        <div class="grid gap-4 sm:grid-cols-2">
+                        <div class="grid gap-5 sm:grid-cols-2">
                             <label class="grid gap-2">
                                 <span class="text-sm font-medium text-zinc-200">Title</span>
                                 <input
@@ -83,7 +91,7 @@
                             </label>
                         </div>
 
-                        <div class="grid items-end gap-4 sm:grid-cols-2">
+                        <div class="grid gap-3">
                             <div
                                 x-data="{
                                     open: false,
@@ -162,7 +170,7 @@
                                 </div>
                             </div>
 
-                            <div class="flex gap-2">
+                            <div class="flex gap-3">
                                 @if (filled($cancelUrl))
                                     <a
                                         href="{{ $cancelUrl }}"
@@ -207,6 +215,7 @@
                     'asideClass' => 'min-h-0 rounded-xl border border-white/8 bg-[#1c1c21] shadow-xl flex flex-1 flex-col',
                 ])
             </div>
+            </div>{{-- end flex flex-row (canvas + sidebar) --}}
         </div>
     @else
         <div
@@ -250,6 +259,8 @@
         state:       config.state,
         orientation: config.orientation ?? 'landscape',
         customComponents: config.customComponents ?? [],
+        pageTitle:   config.pageTitle ?? '',
+        isEditing:   config.isEditing ?? false,
 
         realSizes: {
             landscape: { width: 1920, height: 1080 },
