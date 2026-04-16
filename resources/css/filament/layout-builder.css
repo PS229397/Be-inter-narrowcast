@@ -6,6 +6,27 @@
     min-width: 0;
     container-type: inline-size;
     container-name: layout-page;
+    --lb-page-max-width: 1440px;
+    --lb-page-min-left-clearance: 320px;
+    --lb-page-min-right-clearance: 40px;
+}
+
+@media (min-width: 64rem) {
+    .lb-page-container {
+        --lb-page-width: min(
+            var(--lb-page-max-width),
+            calc(
+                100vw - var(--lb-page-min-left-clearance) - var(--lb-page-min-right-clearance)
+            )
+        );
+        width: min(100%, var(--lb-page-width));
+        max-width: var(--lb-page-width);
+        margin-left: max(
+            var(--lb-page-min-left-clearance),
+            calc((100vw - var(--lb-page-width)) / 2)
+        );
+        margin-right: auto;
+    }
 }
 
 .lb-builder {
@@ -85,8 +106,9 @@
 
 .lb-standalone-layout {
     display: flex;
-    gap: 1.25rem;
+    gap: var(--lb-standalone-gap);
     align-items: stretch;
+    min-width: 0;
 }
 
 .lb-builder.is-standalone .lb-standalone-layout {
@@ -95,15 +117,30 @@
 
 .lb-standalone-sidebar {
     display: flex;
-    flex: 1;
+    flex: 0 0 var(--lb-standalone-panel-size);
+    width: var(--lb-standalone-panel-size);
+    min-width: var(--lb-standalone-panel-min-size);
     height: var(--lb-standalone-canvas-size);
     min-height: 0;
     flex-direction: column;
-    gap: 1.25rem;
+    gap: var(--lb-standalone-gap);
 }
 
 .lb-builder.is-standalone {
-    --lb-standalone-canvas-size: 945px;
+    --lb-standalone-gap: 1.25rem;
+    --lb-standalone-canvas-max-size: 945px;
+    --lb-standalone-panel-min-size: 18rem;
+    --lb-standalone-panel-size: max(
+        var(--lb-standalone-panel-min-size),
+        calc(100cqw - var(--lb-standalone-canvas-size) - var(--lb-standalone-gap))
+    );
+    --lb-standalone-canvas-size: min(
+        var(--lb-standalone-canvas-max-size),
+        max(
+            0px,
+            calc(100cqw - var(--lb-standalone-panel-min-size) - var(--lb-standalone-gap))
+        )
+    );
 }
 
 .lb-builder.is-standalone .lb-canvas {
