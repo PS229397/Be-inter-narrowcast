@@ -71,7 +71,7 @@
             >
                 <button
                     type="button"
-                    x-on:click="panelMode = 'components'"
+                    x-on:click="window.dispatchEvent(new CustomEvent('lb-customize-reset')); panelMode = 'components'"
                     class="lb-tab-button h-[2.45rem] w-[2.45rem] shrink-0 rounded-full px-0 py-0"
                 >
                     <svg class="h-3.5 w-3.5" viewBox="0 0 16 16" fill="none">
@@ -175,6 +175,7 @@
                                     state: '',
                                     language: 'css',
                                 })"
+                                x-on:lb-customize-reset.window="state = ''"
                                 wire:ignore
                                 class="h-full min-h-0"
                             >
@@ -201,6 +202,7 @@
                                     state: '',
                                     language: 'javascript',
                                 })"
+                                x-on:lb-customize-reset.window="state = ''"
                                 wire:ignore
                                 class="h-full min-h-0"
                             >
