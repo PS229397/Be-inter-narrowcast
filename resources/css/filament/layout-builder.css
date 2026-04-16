@@ -3,7 +3,6 @@
 }
 
 .lb-builder {
-    width: 100%;
     color: var(--lb-text);
     --lb-primary-300: var(--primary-300, #fcd34d);
     --lb-primary-400: var(--primary-400, #fbbf24);
@@ -109,7 +108,6 @@
 
 .lb-builder.is-standalone .lb-panel-card {
     height: var(--lb-standalone-canvas-size);
-    max-height: var(--lb-standalone-canvas-size);
 }
 
 .lb-stage {
