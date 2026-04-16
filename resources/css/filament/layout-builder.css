@@ -2,6 +2,12 @@
     display: none !important;
 }
 
+.lb-page-container {
+    min-width: 0;
+    container-type: inline-size;
+    container-name: layout-page;
+}
+
 .lb-builder {
     width: 100%;
     color: var(--lb-text);

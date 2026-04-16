@@ -7,7 +7,7 @@
 @endPushOnce
 
 <x-filament-panels::page>
-    <div class="mx-auto w-full max-w-[1440px] px-4 py-8 lg:py-16 xl:px-0">
+    <div class="lb-page-container mx-auto w-full max-w-[1440px] px-4 py-8 lg:py-16 xl:px-0">
         <div class="mb-4 flex items-center justify-between">
             <h1 x-data class="text-3xl font-bold text-gray-950 dark:text-white">
                 {{ $this instanceof \Filament\Resources\Pages\EditRecord ? 'Edit ' : 'Create ' }}<span x-text="$wire.get('data.title') || 'Untitled layout'"></span>
