@@ -2,26 +2,29 @@
     class="lb-panel"
     x-on:click.stop
 >
-    <div x-data="{ baseOpen: true }" class="lb-panel-scroll">
-        <section class="lb-card">
-            <button
-                type="button"
-                x-on:click="baseOpen = ! baseOpen"
-                class="lb-card-toggle"
-            >
-                <span class="lb-card-title">Base components</span>
-                <svg
-                    class="lb-chevron"
-                    x-bind:style="baseOpen ? 'transform: rotate(180deg);' : ''"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                    aria-hidden="true"
+    <div x-data="{ activeTab: 'base' }" class="lb-panel-scroll">
+        <section class="lb-card lb-panel-card">
+            <div class="lb-tab-list" role="tablist" aria-label="Layout component tabs">
+                <button
+                    type="button"
+                    x-on:click="activeTab = 'base'"
+                    x-bind:class="{ 'is-active': activeTab === 'base' }"
+                    class="lb-tab-button"
                 >
-                    <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 11.168l3.71-3.938a.75.75 0 1 1 1.08 1.04l-4.25 4.51a.75.75 0 0 1-1.08 0l-4.25-4.51a.75.75 0 0 1 .02-1.06Z" clip-rule="evenodd" />
-                </svg>
-            </button>
+                    <span>Base components</span>
+                </button>
+                <button
+                    type="button"
+                    x-on:click="activeTab = 'custom'"
+                    x-bind:class="{ 'is-active': activeTab === 'custom' }"
+                    class="lb-tab-button"
+                >
+                    <span>Custom components</span>
+                    <span class="lb-tab-count">{{ count($customComponents) }}</span>
+                </button>
+            </div>
 
-            <div x-cloak x-show="baseOpen" class="lb-card-body">
+            <div x-cloak x-show="activeTab === 'base'" class="lb-card-body lb-card-body--fill">
                 <div class="lb-component-grid">
                     @foreach ($baseComponents as $component)
                         <button
@@ -41,16 +44,10 @@
                     Select a section on the canvas, then choose a base component.
                 </p>
             </div>
-        </section>
 
-        <section class="lb-card">
-            <div class="lb-card-header">
-                <p class="lb-card-title">Custom components</p>
-                <span class="lb-card-count">{{ count($customComponents) }}</span>
-            </div>
-
-            @if (count($customComponents))
-                <div class="lb-component-stack">
+            <div x-cloak x-show="activeTab === 'custom'" class="lb-card-body lb-card-body--fill">
+                @if (count($customComponents))
+                    <div class="lb-component-stack lb-component-stack--flush">
                     @foreach ($customComponents as $component)
                         <button
                             data-component="{{ $component['key'] }}"
@@ -68,14 +65,13 @@
                             </div>
                         </button>
                     @endforeach
-                </div>
-            @else
-                <div class="lb-component-stack">
+                    </div>
+                @else
                     <p class="lb-empty-note">
                         No custom components are available for the current customer selection.
                     </p>
-                </div>
-            @endif
+                @endif
+            </div>
         </section>
     </div>
 </aside>

@@ -80,20 +80,25 @@
 .lb-standalone-layout {
     display: flex;
     gap: 1.25rem;
-    align-items: flex-start;
+    align-items: stretch;
 }
 
 .lb-standalone-sidebar {
     display: flex;
     flex: 1;
+    height: var(--lb-standalone-canvas-size);
     min-height: 0;
     flex-direction: column;
     gap: 1.25rem;
 }
 
+.lb-builder.is-standalone {
+    --lb-standalone-canvas-size: 945px;
+}
+
 .lb-builder.is-standalone .lb-canvas {
-    width: 945px;
-    height: 945px;
+    width: var(--lb-standalone-canvas-size);
+    height: var(--lb-standalone-canvas-size);
     flex-shrink: 0;
     box-sizing: border-box;
     background: var(--lb-surface-subtle);
@@ -107,6 +112,7 @@
 
 .lb-builder.is-standalone .lb-panel {
     flex: 1 1 0%;
+    height: 100%;
 }
 
 .lb-workspace {
@@ -238,13 +244,78 @@
 
 .lb-panel-scroll {
     display: flex;
+    flex: 1 1 auto;
+    height: 100%;
     flex-direction: column;
     gap: 1rem;
-    overflow-y: visible;
+    min-height: 0;
+    overflow: hidden;
 }
 
 .lb-card {
     background: var(--lb-surface-subtle);
+}
+
+.lb-panel-card {
+    display: flex;
+    flex: 1 1 auto;
+    height: 100%;
+    min-height: 0;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.lb-tab-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.5rem;
+    border-bottom: 1px solid var(--lb-border-soft);
+    padding: 1rem;
+}
+
+.lb-tab-button {
+    display: inline-flex;
+    min-width: 0;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border: 1px solid var(--lb-border);
+    border-radius: 0.85rem;
+    background: var(--lb-surface-muted);
+    padding: 0.8rem 0.95rem;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--lb-text-muted);
+    cursor: pointer;
+    transition:
+        border-color 150ms ease,
+        background-color 150ms ease,
+        color 150ms ease;
+}
+
+.lb-tab-button:hover,
+.lb-tab-button.is-active {
+    border-color: var(--lb-accent-border);
+    background: color-mix(in oklab, var(--lb-surface-muted) 82%, var(--lb-accent-soft));
+    color: var(--lb-accent-strong);
+}
+
+.lb-tab-button.is-active {
+    background: var(--lb-accent-faint);
+}
+
+.lb-tab-count {
+    display: inline-flex;
+    min-width: 1.4rem;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--lb-border-soft);
+    border-radius: 999px;
+    background: var(--lb-surface);
+    padding: 0.15rem 0.4rem;
+    font-size: 0.6875rem;
+    line-height: 1;
+    color: var(--lb-text-soft);
 }
 
 .lb-card-toggle,
@@ -290,6 +361,14 @@
     gap: 0.875rem;
     border-top: 1px solid var(--lb-border-soft);
     padding: 1rem;
+}
+
+.lb-card-body--fill {
+    flex: 1 1 auto;
+    min-height: 0;
+    align-content: start;
+    overflow-y: auto;
+    border-top: 0;
 }
 
 .lb-component-grid {
@@ -365,6 +444,10 @@
     display: grid;
     gap: 0.5rem;
     padding: 0 1rem 1rem;
+}
+
+.lb-component-stack--flush {
+    padding: 0;
 }
 
 .lb-component-row {
