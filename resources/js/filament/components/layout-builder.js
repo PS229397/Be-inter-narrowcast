@@ -68,10 +68,10 @@ export default function layoutBuilder(config) {
         stageStyle() {
             if (this.standalone) {
                 if (this.orientation === 'portrait') {
-                    return 'aspect-ratio: 9 / 16; height: 100%; width: auto;'
+                    return 'aspect-ratio: 9 / 16; height: 100%; max-width: 488.25px; width: auto;'
                 }
 
-                return 'aspect-ratio: 16 / 9; width: 100%; max-height: 100%;'
+                return 'aspect-ratio: 16 / 9; width: 100%; max-height: 520px;'
             }
 
             if (this.orientation === 'portrait') {

@@ -8,7 +8,13 @@
       "Bash(git checkout:*)",
       "Bash(php artisan:*)",
       "Bash(composer run *)",
-      "Bash(npm run *)"
+      "Bash(npm run *)",
+      "Bash(npx vite *)",
+      "Bash(ls public/css/app/)",
+      "Bash(ls public/build/)",
+      "Bash(grep -r \"layout-builder\" vite.config*)",
+      "Bash(cat vite.config.js)",
+      "Bash(cat vite.config.ts)"
     ]
   }
 }
