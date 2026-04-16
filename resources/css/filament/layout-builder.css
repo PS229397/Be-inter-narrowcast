@@ -177,7 +177,7 @@
     pointer-events: none;
     position: absolute;
     right: calc(1.25rem - 10px);
-    bottom: calc(1.25rem - 10px);
+    top: calc(1.25rem - 10px);
     z-index: 20;
 }
 
