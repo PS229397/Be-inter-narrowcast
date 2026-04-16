@@ -80,12 +80,13 @@ class LayoutResource extends Resource
             ->values()
             ->all();
 
+        if (count($normalizedCustomerIds) !== 1) {
+            return [];
+        }
+
         return CustomComponent::query()
             ->with('customer:id,name')
-            ->when(
-                filled($normalizedCustomerIds),
-                fn ($query) => $query->whereIn('customer_id', $normalizedCustomerIds),
-            )
+            ->where('customer_id', $normalizedCustomerIds[0])
             ->orderBy('title')
             ->get()
             ->map(fn (CustomComponent $component): array => [

@@ -149,13 +149,14 @@ class LayoutResourceTest extends TestCase
         $this->assertSame(['image'], LayoutGrid::assignedComponentKeys($layout->grid));
     }
 
-    public function test_new_base_components_are_available_for_layouts(): void
+    public function test_current_base_components_are_available_for_layouts(): void
     {
         $allowedKeys = LayoutResource::getAllowedComponentKeys();
 
-        $this->assertContains('logo', $allowedKeys);
-        $this->assertContains('map', $allowedKeys);
-        $this->assertContains('stat', $allowedKeys);
+        $this->assertContains('text', $allowedKeys);
+        $this->assertContains('image', $allowedKeys);
+        $this->assertContains('video', $allowedKeys);
+        $this->assertContains('qr', $allowedKeys);
 
         $this->assertSame(
             [],
@@ -170,7 +171,7 @@ class LayoutResourceTest extends TestCase
                             'direction' => null,
                             'split' => 50,
                             'children' => [],
-                            'component' => 'logo',
+                            'component' => 'text',
                         ],
                         [
                             'id' => 'n2',
@@ -182,14 +183,14 @@ class LayoutResourceTest extends TestCase
                                     'direction' => null,
                                     'split' => 50,
                                     'children' => [],
-                                    'component' => 'map',
+                                    'component' => 'image',
                                 ],
                                 [
                                     'id' => 'n4',
                                     'direction' => null,
                                     'split' => 50,
                                     'children' => [],
-                                    'component' => 'stat',
+                                    'component' => 'qr',
                                 ],
                             ],
                         ],
@@ -198,6 +199,45 @@ class LayoutResourceTest extends TestCase
                 $allowedKeys,
             ),
         );
+    }
+
+    public function test_custom_components_are_unavailable_for_all_customer_layouts(): void
+    {
+        $customer = Customer::factory()->create();
+        $component = CustomComponent::factory()->create([
+            'customer_id' => $customer->id,
+        ]);
+
+        $this->assertSame([], LayoutResource::getCustomComponents());
+
+        $allowedKeys = LayoutResource::getAllowedComponentKeys();
+
+        $this->assertContains('text', $allowedKeys);
+        $this->assertNotContains('custom:'.$component->id, $allowedKeys);
+    }
+
+    public function test_custom_components_are_unavailable_when_multiple_customers_are_selected(): void
+    {
+        $firstCustomer = Customer::factory()->create();
+        $secondCustomer = Customer::factory()->create();
+
+        $firstComponent = CustomComponent::factory()->create([
+            'customer_id' => $firstCustomer->id,
+        ]);
+
+        $secondComponent = CustomComponent::factory()->create([
+            'customer_id' => $secondCustomer->id,
+        ]);
+
+        $this->assertSame(
+            [],
+            LayoutResource::getCustomComponents([$firstCustomer->id, $secondCustomer->id]),
+        );
+
+        $allowedKeys = LayoutResource::getAllowedComponentKeys([$firstCustomer->id, $secondCustomer->id]);
+
+        $this->assertNotContains('custom:'.$firstComponent->id, $allowedKeys);
+        $this->assertNotContains('custom:'.$secondComponent->id, $allowedKeys);
     }
 
     protected function makeAdminUser(): User

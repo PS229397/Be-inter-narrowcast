@@ -14,7 +14,9 @@ trait InteractsWithLayoutData
      */
     protected function normalizeLayoutData(array $data): array
     {
-        $customerIds = collect((array) ($data['customers'] ?? []))
+        $rawCustomerIds = $data['customers'] ?? data_get($this, 'data.customers', []);
+
+        $customerIds = collect((array) $rawCustomerIds)
             ->filter(fn (mixed $id): bool => filled($id))
             ->map(fn (mixed $id): int => (int) $id)
             ->values()
