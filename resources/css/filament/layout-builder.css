@@ -92,8 +92,8 @@
 }
 
 .lb-builder.is-standalone .lb-canvas {
-    width: 900px;
-    height: 900px;
+    width: 950px;
+    height: 950px;
     flex-shrink: 0;
     box-sizing: border-box;
     background: var(--lb-surface-subtle);
