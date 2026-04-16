@@ -16,7 +16,10 @@
             <button
                 x-ref="btnSliceH"
                 type="button"
-                title="Split horizontally"
+                x-tooltip="{
+                    content: 'Split horizontally',
+                    theme: $store.theme,
+                }"
                 x-on:click.stop="if (selectedId) slice(selectedId, 'h')"
                 class="lb-icon-button"
             >
@@ -27,7 +30,10 @@
             <button
                 x-ref="btnSliceV"
                 type="button"
-                title="Split vertically"
+                x-tooltip="{
+                    content: 'Split vertically',
+                    theme: $store.theme,
+                }"
                 x-on:click.stop="if (selectedId) slice(selectedId, 'v')"
                 class="lb-icon-button"
             >
@@ -38,7 +44,10 @@
             <button
                 x-ref="btnDelete"
                 type="button"
-                title="Delete section"
+                x-tooltip="{
+                    content: 'Delete section',
+                    theme: $store.theme,
+                }"
                 x-on:click.stop="if (selectedId) deleteNode(selectedId)"
                 class="lb-icon-button lb-icon-button--danger"
             >
@@ -51,7 +60,10 @@
             </button>
             <button
                 type="button"
-                title="Clear canvas"
+                x-tooltip="{
+                    content: 'Clear canvas',
+                    theme: $store.theme,
+                }"
                 x-on:click.stop="clearCanvas()"
                 class="lb-icon-button lb-icon-button--danger"
             >

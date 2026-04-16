@@ -29,9 +29,11 @@ export default function layoutBuilder(config) {
         generatedNodeIndex: 0,
         selectedId: null,
         isDragging: false,
+        themeObserver: null,
 
         init() {
             this._initGrid()
+            this.observeTheme()
 
             this.$watch('state', (value) => {
                 const normalized = this._normalizeGrid(value)
@@ -50,13 +52,26 @@ export default function layoutBuilder(config) {
             this.$nextTick(() => this.render())
         },
 
+        observeTheme() {
+            this.themeObserver?.disconnect()
+
+            this.themeObserver = new MutationObserver(() => {
+                this.$nextTick(() => this.render())
+            })
+
+            this.themeObserver.observe(document.documentElement, {
+                attributes: true,
+                attributeFilter: ['class', 'style'],
+            })
+        },
+
         stageStyle() {
             if (this.standalone) {
                 if (this.orientation === 'portrait') {
-                    return 'width:540px;height:960px;'
+                    return 'aspect-ratio: 9 / 16; height: 100%; width: auto;'
                 }
 
-                return 'width:960px;height:540px;'
+                return 'aspect-ratio: 16 / 9; width: 100%; max-height: 100%;'
             }
 
             if (this.orientation === 'portrait') {
@@ -362,6 +377,39 @@ export default function layoutBuilder(config) {
             return this.getCustomComponent(type)?.icon ?? null
         },
 
+        selectedNode() {
+            if (!this.selectedId || !this.grid) {
+                return null
+            }
+
+            return this.findNode(this.grid, this.selectedId)
+        },
+
+        selectedComponentKey() {
+            return this.selectedNode()?.component ?? null
+        },
+
+        themeColors() {
+            const styles = getComputedStyle(this.$root)
+            const read = (name, fallback) =>
+                styles.getPropertyValue(name).trim() || fallback
+
+            return {
+                dashIdle: read('--lb-accent-border', 'rgba(245, 158, 11, 0.3)'),
+                dashHover: read('--lb-accent-outline', 'rgba(245, 158, 11, 0.7)'),
+                dashActive: read('--lb-accent', 'rgba(245, 158, 11, 1)'),
+                leafBg: read('--lb-node-bg', 'rgba(17, 17, 20, 0.55)'),
+                leafHoverBg: read('--lb-node-hover-bg', 'rgba(245, 158, 11, 0.1)'),
+                iconColor: read('--lb-node-icon', 'rgba(245, 158, 11, 0.35)'),
+                iconColorSoft: read('--lb-node-icon-soft', 'rgba(245, 158, 11, 0.5)'),
+                customLabelColor: read('--lb-node-label', 'rgba(245, 158, 11, 0.72)'),
+                pillText: read('--lb-pill-text', 'rgba(161, 161, 170, 0.7)'),
+                pillBg: read('--lb-pill-bg', 'rgba(17, 17, 20, 0.7)'),
+                pillBorder: read('--lb-pill-border', 'rgba(161, 161, 170, 0.12)'),
+                selection: read('--lb-accent-outline', 'rgba(245, 158, 11, 0.75)'),
+            }
+        },
+
         fmtPill(wPct, hPct) {
             const real = this.realSizes[this.orientation] ?? this.realSizes.landscape
 
@@ -400,7 +448,14 @@ export default function layoutBuilder(config) {
 
             container.innerHTML = ''
 
-            const rootEl = this.buildEl(this.grid, 100, 100, this.leafOrder(this.grid))
+            const rootEl = this.buildEl(
+                this.grid,
+                100,
+                100,
+                this.leafOrder(this.grid),
+                { topLeft: true, topRight: true, bottomRight: true, bottomLeft: true },
+                this.themeColors(),
+            )
             rootEl.style.position = 'absolute'
             rootEl.style.inset = '0'
             container.appendChild(rootEl)
@@ -419,11 +474,6 @@ export default function layoutBuilder(config) {
                     this.$refs.btnDelete?.classList.toggle('is-hidden', this.selectedId === 'root')
                 }
             }
-
-            this.$el.querySelectorAll('[data-component]').forEach((button) => {
-                const active = selectedNode?.component === button.dataset.component
-                button.classList.toggle('is-active', active)
-            })
         },
 
         buildEl(
@@ -432,6 +482,7 @@ export default function layoutBuilder(config) {
             hPct = 100,
             order = new Map(),
             corners = { topLeft: true, topRight: true, bottomRight: true, bottomLeft: true },
+            theme = this.themeColors(),
         ) {
             const el = document.createElement('div')
             el.dataset.nodeId = node.id
@@ -477,9 +528,6 @@ export default function layoutBuilder(config) {
                     ? `flex:0 0 ${split}%;min-height:0;position:relative;overflow:hidden;`
                     : `flex:0 0 ${split}%;min-width:0;position:relative;overflow:hidden;`
 
-                const dashIdle = 'rgba(245,158,11,0.3)'
-                const dashHover = 'rgba(245,158,11,0.7)'
-                const dashActive = 'rgba(245,158,11,1)'
                 const dashedBg = (color, direction) =>
                     direction === 'h'
                         ? `repeating-linear-gradient(to right,${color} 0,${color} 4px,transparent 4px,transparent 8px)`
@@ -494,15 +542,15 @@ export default function layoutBuilder(config) {
                 line.style.cssText = isHorizontal
                     ? 'width:100%;height:1px;transition:background 0.15s;'
                     : 'height:100%;width:1px;transition:background 0.15s;'
-                line.style.background = dashedBg(dashIdle, node.direction)
+                line.style.background = dashedBg(theme.dashIdle, node.direction)
                 handle.appendChild(line)
 
                 handle.addEventListener('mouseenter', () => {
-                    line.style.background = dashedBg(dashHover, node.direction)
+                    line.style.background = dashedBg(theme.dashHover, node.direction)
                 })
                 handle.addEventListener('mouseleave', () => {
                     if (!handle._drag) {
-                        line.style.background = dashedBg(dashIdle, node.direction)
+                        line.style.background = dashedBg(theme.dashIdle, node.direction)
                     }
                 })
                 handle.addEventListener('click', (event) => event.stopPropagation())
@@ -512,7 +560,7 @@ export default function layoutBuilder(config) {
                     event.preventDefault()
                     handle._drag = true
                     this.isDragging = true
-                    line.style.background = dashedBg(dashActive, node.direction)
+                    line.style.background = dashedBg(theme.dashActive, node.direction)
 
                     const rect = el.getBoundingClientRect()
                     const onMove = (moveEvent) => {
@@ -545,7 +593,7 @@ export default function layoutBuilder(config) {
                     const onUp = () => {
                         handle._drag = false
                         this.isDragging = false
-                        line.style.background = dashedBg(dashIdle, node.direction)
+                        line.style.background = dashedBg(theme.dashIdle, node.direction)
                         this._save()
                         document.removeEventListener('mousemove', onMove)
                         document.removeEventListener('mouseup', onUp)
@@ -567,6 +615,7 @@ export default function layoutBuilder(config) {
                         isHorizontal ? (hPct * split) / 100 : hPct,
                         order,
                         child1Corners,
+                        theme,
                     ),
                 )
                 secondWrapper.appendChild(
@@ -576,6 +625,7 @@ export default function layoutBuilder(config) {
                         isHorizontal ? (hPct * (100 - split)) / 100 : hPct,
                         order,
                         child2Corners,
+                        theme,
                     ),
                 )
 
@@ -584,7 +634,7 @@ export default function layoutBuilder(config) {
                 el.appendChild(secondWrapper)
             } else {
                 this.applyCornerRadius(el, corners)
-                el.style.backgroundColor = 'rgba(17,17,20,0.55)'
+                el.style.backgroundColor = theme.leafBg
                 el.style.cursor = 'pointer'
                 el.style.transition = 'background-color 0.15s'
 
@@ -595,7 +645,7 @@ export default function layoutBuilder(config) {
                 const componentIcon = this.getComponentIcon(node.component)
 
                 if (componentIcon) {
-                    center.innerHTML = `<svg viewBox="0 0 20 20" fill="none" style="width:56px;height:56px;color:rgba(245,158,11,0.5)">${componentIcon}</svg>`
+                    center.innerHTML = `<svg viewBox="0 0 20 20" fill="none" style="width:56px;height:56px;color:${theme.iconColorSoft}">${componentIcon}</svg>`
 
                     if (this.isCustomComponent(node.component)) {
                         const label = this.getCustomComponent(node.component)?.title ?? 'Custom'
@@ -603,15 +653,14 @@ export default function layoutBuilder(config) {
                         center.style.gap = '8px'
 
                         const labelEl = document.createElement('div')
-                        labelEl.style.cssText =
-                            'max-width:80%;font-size:12px;font-weight:600;line-height:1.2;color:rgba(245,158,11,0.72);text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;'
+                        labelEl.style.cssText = `max-width:80%;font-size:12px;font-weight:600;line-height:1.2;color:${theme.customLabelColor};text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;`
                         labelEl.textContent = label
                         center.appendChild(labelEl)
                     }
                 } else {
                     center.style.fontSize = '48px'
                     center.style.fontWeight = '700'
-                    center.style.color = 'rgba(245,158,11,0.35)'
+                    center.style.color = theme.iconColor
                     center.style.fontFamily = 'monospace'
                     center.textContent = order.get(node.id) ?? ''
                 }
@@ -621,24 +670,23 @@ export default function layoutBuilder(config) {
                 const pill = document.createElement('div')
                 pill.dataset.pctLabel = ''
                 pill.textContent = this.fmtPill(wPct, hPct)
-                pill.style.cssText =
-                    'position:absolute;bottom:5px;left:6px;font-size:10px;line-height:1;color:rgba(161,161,170,0.7);background:rgba(17,17,20,0.7);border:1px solid rgba(161,161,170,0.12);border-radius:999px;padding:3px 8px;pointer-events:none;z-index:5;user-select:none;font-family:monospace;white-space:nowrap;'
+                pill.style.cssText = `position:absolute;bottom:5px;left:6px;font-size:10px;line-height:1;color:${theme.pillText};background:${theme.pillBg};border:1px solid ${theme.pillBorder};border-radius:999px;padding:3px 8px;pointer-events:none;z-index:5;user-select:none;font-family:monospace;white-space:nowrap;`
                 el.appendChild(pill)
 
                 el.addEventListener('mouseenter', () => {
                     if (!this.isDragging && node.id !== this.selectedId) {
-                        el.style.backgroundColor = 'rgba(245,158,11,0.10)'
+                        el.style.backgroundColor = theme.leafHoverBg
                     }
                 })
                 el.addEventListener('mouseleave', () => {
                     if (!this.isDragging && node.id !== this.selectedId) {
-                        el.style.backgroundColor = 'rgba(17,17,20,0.55)'
+                        el.style.backgroundColor = theme.leafBg
                     }
                 })
             }
 
             if (node.id === this.selectedId) {
-                el.style.outline = '2px solid rgba(245,158,11,0.75)'
+                el.style.outline = `2px solid ${theme.selection}`
                 el.style.outlineOffset = '-2px'
             }
 

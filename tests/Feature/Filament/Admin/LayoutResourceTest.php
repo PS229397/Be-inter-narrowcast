@@ -149,6 +149,57 @@ class LayoutResourceTest extends TestCase
         $this->assertSame(['image'], LayoutGrid::assignedComponentKeys($layout->grid));
     }
 
+    public function test_new_base_components_are_available_for_layouts(): void
+    {
+        $allowedKeys = LayoutResource::getAllowedComponentKeys();
+
+        $this->assertContains('logo', $allowedKeys);
+        $this->assertContains('map', $allowedKeys);
+        $this->assertContains('stat', $allowedKeys);
+
+        $this->assertSame(
+            [],
+            LayoutGrid::invalidComponentKeys(
+                [
+                    'id' => 'root',
+                    'direction' => 'v',
+                    'split' => 50,
+                    'children' => [
+                        [
+                            'id' => 'n1',
+                            'direction' => null,
+                            'split' => 50,
+                            'children' => [],
+                            'component' => 'logo',
+                        ],
+                        [
+                            'id' => 'n2',
+                            'direction' => 'h',
+                            'split' => 50,
+                            'children' => [
+                                [
+                                    'id' => 'n3',
+                                    'direction' => null,
+                                    'split' => 50,
+                                    'children' => [],
+                                    'component' => 'map',
+                                ],
+                                [
+                                    'id' => 'n4',
+                                    'direction' => null,
+                                    'split' => 50,
+                                    'children' => [],
+                                    'component' => 'stat',
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+                $allowedKeys,
+            ),
+        );
+    }
+
     protected function makeAdminUser(): User
     {
         return User::factory()->create([

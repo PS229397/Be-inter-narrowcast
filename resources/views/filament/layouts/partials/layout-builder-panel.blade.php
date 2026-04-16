@@ -28,6 +28,7 @@
                             data-component="{{ $component['key'] }}"
                             type="button"
                             x-on:click.stop="assignComponent(@js($component['key']))"
+                            x-bind:class="{ 'is-active': selectedComponentKey() === @js($component['key']) }"
                             class="lb-component-button"
                         >
                             <svg class="lb-component-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true">{!! $component['icon'] !!}</svg>
@@ -55,6 +56,7 @@
                             data-component="{{ $component['key'] }}"
                             type="button"
                             x-on:click.stop="assignComponent(@js($component['key']))"
+                            x-bind:class="{ 'is-active': selectedComponentKey() === @js($component['key']) }"
                             class="lb-component-row"
                         >
                             <svg class="lb-row-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true">{!! $component['icon'] !!}</svg>

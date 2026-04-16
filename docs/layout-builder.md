@@ -30,6 +30,9 @@ Base CMS components use stable keys such as:
 - `weather`
 - `countdown`
 - `qr`
+- `logo`
+- `map`
+- `stat`
 
 Customer-specific components use the `custom:{id}` format.
 

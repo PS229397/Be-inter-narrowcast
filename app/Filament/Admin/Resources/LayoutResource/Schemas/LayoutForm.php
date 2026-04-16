@@ -5,10 +5,10 @@ namespace App\Filament\Admin\Resources\LayoutResource\Schemas;
 use App\Enums\Orientation;
 use App\Filament\Admin\Resources\LayoutResource;
 use App\Filament\Layouts\LayoutBuilderField;
-use App\Models\Customer;
 use App\Support\Layouts\LayoutGrid;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
+use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 
@@ -18,45 +18,31 @@ class LayoutForm
     {
         return $schema
             ->components([
-                TextInput::make('title')
-                    ->default('Untitled layout')
-                    ->required()
-                    ->maxLength(255)
-                    ->live()
-                    ->hidden()
-                    ->dehydratedWhenHidden(),
-                Select::make('orientation')
-                    ->options(Orientation::class)
-                    ->default(Orientation::Landscape)
-                    ->required()
-                    ->live()
-                    ->disabledOn('edit')
-                    ->hidden()
-                    ->dehydratedWhenHidden(),
-                Select::make('customers')
-                    ->relationship('customers', 'name')
-                    ->multiple()
-                    ->searchable()
-                    ->preload()
-                    ->live()
-                    ->hidden()
-                    ->dehydratedWhenHidden()
-                    ->saveRelationshipsWhenHidden(),
+                Section::make()
+                    ->columnSpanFull()
+                    ->columns(3)
+                    ->schema([
+                        TextInput::make('title')
+                            ->required()
+                            ->maxLength(255)
+                            ->live(),
+                        Select::make('orientation')
+                            ->options(Orientation::class)
+                            ->default(Orientation::Landscape)
+                            ->required()
+                            ->live()
+                            ->disabledOn('edit'),
+                        Select::make('customers')
+                            ->relationship('customers', 'name')
+                            ->multiple()
+                            ->searchable()
+                            ->preload()
+                            ->live(),
+                    ]),
                 LayoutBuilderField::make('grid')
                     ->standalone()
                     ->editing(fn (string $operation): bool => $operation === 'edit')
-                    ->submitAction(fn (string $operation): string => $operation === 'edit' ? 'save' : 'create')
-                    ->submitFormId('form')
                     ->titleStatePath('data.title')
-                    ->orientationStatePath('data.orientation')
-                    ->customersStatePath('data.customers')
-                    ->cancelUrl(fn (): string => LayoutResource::getUrl('index'))
-                    ->customerOptions(
-                        fn (): array => Customer::query()
-                            ->orderBy('name')
-                            ->pluck('name', 'id')
-                            ->all(),
-                    )
                     ->required()
                     ->default(LayoutGrid::empty())
                     ->orientation(fn (Get $get): mixed => $get('orientation'))

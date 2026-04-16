@@ -4,13 +4,84 @@
 
 .lb-builder {
     width: 100%;
+    color: var(--lb-text);
+    --lb-primary-300: var(--primary-300, #fcd34d);
+    --lb-primary-400: var(--primary-400, #fbbf24);
+    --lb-primary-500: var(--primary-500, #f59e0b);
+    --lb-primary-600: var(--primary-600, #d97706);
+    --lb-primary-700: var(--primary-700, #b45309);
+    --lb-text: var(--gray-950);
+    --lb-text-muted: var(--gray-500);
+    --lb-text-soft: var(--gray-400);
+    --lb-border: color-mix(in oklab, var(--gray-950) 8%, transparent);
+    --lb-border-soft: color-mix(in oklab, var(--gray-950) 5%, transparent);
+    --lb-surface: var(--color-white);
+    --lb-surface-subtle: var(--gray-50);
+    --lb-surface-muted: var(--gray-100);
+    --lb-stage-bg: linear-gradient(
+        180deg,
+        color-mix(in oklab, var(--gray-100) 88%, var(--color-white)) 0%,
+        var(--color-white) 100%
+    );
+    --lb-shadow: 0 20px 25px -5px rgb(15 23 42 / 0.08), 0 8px 10px -6px rgb(15 23 42 / 0.08);
+    --lb-stage-shadow: 0 25px 50px -12px rgb(15 23 42 / 0.12);
+    --lb-accent: var(--lb-primary-500);
+    --lb-accent-strong: var(--lb-primary-600);
+    --lb-accent-border: color-mix(in oklab, var(--lb-accent) 35%, transparent);
+    --lb-accent-soft: color-mix(in oklab, var(--lb-accent) 10%, transparent);
+    --lb-accent-faint: color-mix(in oklab, var(--lb-accent) 16%, transparent);
+    --lb-accent-outline: color-mix(in oklab, var(--lb-accent) 72%, transparent);
+    --lb-node-bg: color-mix(in oklab, var(--gray-100) 72%, var(--color-white));
+    --lb-node-hover-bg: var(--lb-accent-soft);
+    --lb-node-icon: color-mix(in oklab, var(--lb-accent) 72%, transparent);
+    --lb-node-icon-soft: color-mix(in oklab, var(--lb-accent) 55%, transparent);
+    --lb-node-label: color-mix(in oklab, var(--lb-accent) 78%, var(--lb-text));
+    --lb-pill-bg: color-mix(in oklab, var(--color-white) 92%, var(--gray-100));
+    --lb-pill-border: var(--lb-border-soft);
+    --lb-pill-text: var(--lb-text-muted);
+    --lb-danger: var(--danger-500, #ef4444);
+    --lb-danger-soft: color-mix(in oklab, var(--lb-danger) 10%, transparent);
+    --lb-danger-border: color-mix(in oklab, var(--lb-danger) 35%, transparent);
+    --lb-danger-text: color-mix(in oklab, var(--lb-danger) 80%, var(--lb-text));
+}
+
+.dark .lb-builder {
+    --lb-text: var(--color-white);
+    --lb-text-muted: var(--gray-400);
+    --lb-text-soft: var(--gray-500);
+    --lb-border: color-mix(in oklab, var(--color-white) 10%, transparent);
+    --lb-border-soft: color-mix(in oklab, var(--color-white) 8%, transparent);
+    --lb-surface: color-mix(in oklab, var(--color-white) 5%, transparent);
+    --lb-surface-subtle: color-mix(in oklab, var(--color-white) 4%, transparent);
+    --lb-surface-muted: color-mix(in oklab, var(--gray-900) 50%, transparent);
+    --lb-stage-bg: color-mix(in oklab, var(--gray-900) 55%, transparent);
+    --lb-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.25), 0 8px 10px -6px rgb(0 0 0 / 0.25);
+    --lb-stage-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.45);
+    --lb-accent: var(--lb-primary-400);
+    --lb-accent-strong: var(--lb-primary-300);
+    --lb-accent-border: color-mix(in oklab, var(--lb-accent) 40%, transparent);
+    --lb-accent-soft: color-mix(in oklab, var(--lb-accent) 12%, transparent);
+    --lb-accent-faint: color-mix(in oklab, var(--lb-accent) 18%, transparent);
+    --lb-accent-outline: color-mix(in oklab, var(--lb-accent) 78%, transparent);
+    --lb-node-bg: color-mix(in oklab, var(--gray-900) 78%, transparent);
+    --lb-node-icon: color-mix(in oklab, var(--lb-accent) 72%, transparent);
+    --lb-node-icon-soft: color-mix(in oklab, var(--lb-accent) 56%, transparent);
+    --lb-node-label: color-mix(in oklab, var(--lb-accent) 76%, var(--lb-text));
+    --lb-pill-bg: color-mix(in oklab, var(--gray-900) 82%, transparent);
+    --lb-danger-soft: color-mix(in oklab, var(--danger-400, #f87171) 14%, transparent);
+    --lb-danger-border: color-mix(in oklab, var(--danger-400, #f87171) 42%, transparent);
+    --lb-danger-text: color-mix(
+        in oklab,
+        var(--danger-300, #fca5a5) 90%,
+        var(--color-white)
+    );
 }
 
 .lb-standalone-layout {
     display: flex;
     gap: 1.25rem;
     align-items: stretch;
-    height: 1000px;
+    height: 900px;
 }
 
 .lb-standalone-sidebar {
@@ -23,8 +94,8 @@
 }
 
 .lb-builder.is-standalone .lb-canvas {
-    width: 1000px;
-    height: 1000px;
+    width: 900px;
+    height: 900px;
     flex-shrink: 0;
 }
 
@@ -52,9 +123,14 @@
 .lb-canvas,
 .lb-panel,
 .lb-card {
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    background: #1c1c21;
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.25), 0 8px 10px -6px rgba(0, 0, 0, 0.25);
+    border: 1px solid var(--lb-border);
+    background: var(--lb-surface);
+    box-shadow: var(--lb-shadow);
+    transition:
+        border-color 150ms ease,
+        background-color 150ms ease,
+        box-shadow 150ms ease,
+        color 150ms ease;
 }
 
 .lb-canvas,
@@ -80,10 +156,14 @@
     position: relative;
     width: 100%;
     overflow: hidden;
-    border: 1px dashed rgba(245, 158, 11, 0.2);
+    border: 1px dashed var(--lb-accent-border);
     border-radius: 1rem;
-    background: #111114;
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.45);
+    background: var(--lb-stage-bg);
+    box-shadow: var(--lb-stage-shadow);
+    transition:
+        border-color 150ms ease,
+        background-color 150ms ease,
+        box-shadow 150ms ease;
 }
 
 .lb-grid {
@@ -114,29 +194,33 @@
     height: 2.5rem;
     width: 2.5rem;
     place-items: center;
-    border: 1px solid rgba(245, 158, 11, 0.4);
+    border: 1px solid var(--lb-accent-border);
     border-radius: 0.75rem;
-    background: rgba(28, 28, 33, 0.95);
-    color: #f8fafc;
+    background: var(--lb-surface-subtle);
+    color: var(--lb-accent);
     cursor: pointer;
-    transition: border-color 150ms ease, color 150ms ease, background-color 150ms ease;
+    transition:
+        border-color 150ms ease,
+        color 150ms ease,
+        background-color 150ms ease;
 }
 
 .lb-icon-button:hover {
-    border-color: rgba(252, 211, 77, 0.8);
-    color: #fbbf24;
+    border-color: var(--lb-accent-outline);
+    background: var(--lb-accent-soft);
+    color: var(--lb-accent-strong);
 }
 
 .lb-icon-button--danger {
-    border-color: rgba(248, 113, 113, 0.4);
-    background: rgba(239, 68, 68, 0.12);
-    color: #fca5a5;
+    border-color: var(--lb-danger-border);
+    background: var(--lb-danger-soft);
+    color: var(--lb-danger-text);
 }
 
 .lb-icon-button--danger:hover {
-    border-color: rgba(252, 165, 165, 0.85);
-    background: rgba(239, 68, 68, 0.18);
-    color: #fecaca;
+    border-color: color-mix(in oklab, var(--lb-danger) 50%, transparent);
+    background: color-mix(in oklab, var(--lb-danger) 16%, transparent);
+    color: var(--lb-danger-text);
 }
 
 .lb-icon {
@@ -160,7 +244,7 @@
     padding: 1rem;
     scrollbar-gutter: stable;
     scrollbar-width: thin;
-    scrollbar-color: #f59e0b transparent;
+    scrollbar-color: var(--lb-accent) transparent;
 }
 
 .lb-panel-scroll::-webkit-scrollbar {
@@ -172,16 +256,16 @@
 }
 
 .lb-panel-scroll::-webkit-scrollbar-thumb {
-    background-color: #f59e0b;
+    background-color: var(--lb-accent);
     border-radius: 999px;
 }
 
 .lb-panel-scroll::-webkit-scrollbar-thumb:hover {
-    background-color: #fbbf24;
+    background-color: var(--lb-accent-strong);
 }
 
 .lb-card {
-    background: #111114;
+    background: var(--lb-surface-subtle);
 }
 
 .lb-card-toggle,
@@ -196,7 +280,7 @@
 
 .lb-card-toggle {
     background: transparent;
-    color: #d4d4d8;
+    color: var(--lb-text);
     border: 0;
     cursor: pointer;
     text-align: left;
@@ -205,27 +289,27 @@
 .lb-card-title {
     font-size: 0.875rem;
     font-weight: 600;
-    color: #d4d4d8;
+    color: var(--lb-text);
 }
 
 .lb-card-count {
     font-size: 0.6875rem;
     letter-spacing: 0.08em;
     text-transform: uppercase;
-    color: #71717a;
+    color: var(--lb-text-muted);
 }
 
 .lb-chevron {
     width: 1rem;
     height: 1rem;
-    color: #71717a;
+    color: var(--lb-text-muted);
     transition: transform 150ms ease;
 }
 
 .lb-card-body {
     display: grid;
     gap: 0.875rem;
-    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    border-top: 1px solid var(--lb-border-soft);
     padding: 1rem;
 }
 
@@ -237,25 +321,29 @@
 
 .lb-component-button,
 .lb-component-row {
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--lb-border);
     border-radius: 0.9rem;
-    background: #24242a;
-    color: #a1a1aa;
+    background: var(--lb-surface-muted);
+    color: var(--lb-text-muted);
     cursor: pointer;
-    transition: border-color 150ms ease, color 150ms ease, background-color 150ms ease;
+    transition:
+        border-color 150ms ease,
+        color 150ms ease,
+        background-color 150ms ease;
 }
 
 .lb-component-button:hover,
 .lb-component-row:hover,
 .lb-component-button.is-active,
 .lb-component-row.is-active {
-    border-color: rgba(245, 158, 11, 0.45);
-    color: #fcd34d;
+    border-color: var(--lb-accent-border);
+    background: color-mix(in oklab, var(--lb-surface-muted) 82%, var(--lb-accent-soft));
+    color: var(--lb-accent-strong);
 }
 
 .lb-component-button.is-active,
 .lb-component-row.is-active {
-    background: rgba(245, 158, 11, 0.08);
+    background: var(--lb-accent-faint);
 }
 
 .lb-component-button {
@@ -281,13 +369,13 @@
 
 .lb-muted-note,
 .lb-empty-note {
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    border: 1px solid var(--lb-border-soft);
     border-radius: 0.9rem;
-    background: #16161b;
+    background: var(--lb-surface);
     padding: 0.75rem 0.875rem;
     font-size: 0.75rem;
     line-height: 1.4;
-    color: #71717a;
+    color: var(--lb-text-muted);
 }
 
 .lb-empty-note {
@@ -328,5 +416,5 @@
     font-size: 0.75rem;
     text-overflow: ellipsis;
     white-space: nowrap;
-    color: #71717a;
+    color: var(--lb-text-soft);
 }
