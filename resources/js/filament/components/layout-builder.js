@@ -438,6 +438,43 @@ export default function layoutBuilder(config) {
             return `${Math.round((real.width * wPct) / 100)}x${Math.round((real.height * hPct) / 100)}px`
         },
 
+        updateAllPills() {
+            const container = this.$refs.gridContainer
+
+            if (!container) {
+                return
+            }
+
+            const rootRect = container.getBoundingClientRect()
+
+            if (rootRect.width <= 0 || rootRect.height <= 0) {
+                return
+            }
+
+            for (const [nodeId, el] of this.elementsById) {
+                const node = this.nodesById.get(nodeId)
+
+                if (!node || (node.children ?? []).length > 0) {
+                    continue
+                }
+
+                const pill = el.querySelector('[data-pct-label]')
+
+                if (!pill) {
+                    continue
+                }
+
+                const rect = el.getBoundingClientRect()
+                const wPct = (rect.width / rootRect.width) * 100
+                const hPct = (rect.height / rootRect.height) * 100
+
+                pill.textContent = this.fmtPill(
+                    Math.max(0, Math.min(100, wPct)),
+                    Math.max(0, Math.min(100, hPct)),
+                )
+            }
+        },
+
         leafOrder(node, map = new Map(), counter = { n: 0 }) {
             if ((node.children ?? []).length === 0) {
                 map.set(node.id, ++counter.n)
@@ -488,6 +525,7 @@ export default function layoutBuilder(config) {
             rootEl.style.inset = '0'
             container.appendChild(rootEl)
 
+            this.updateAllPills()
             this.renderSelection()
         },
 
@@ -642,6 +680,7 @@ export default function layoutBuilder(config) {
                         handle.classList.remove('is-dragging')
                         this.isDragging = false
                         this.$refs.gridContainer?.classList.remove('is-dragging')
+                        this.updateAllPills()
                         this._save()
                         document.removeEventListener('mousemove', onMove)
                         document.removeEventListener('mouseup', onUp)
