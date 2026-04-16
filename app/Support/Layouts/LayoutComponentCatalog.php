@@ -64,24 +64,6 @@ class LayoutComponentCatalog
                 'icon' => '<rect x="3" y="3" width="5" height="5" rx="0.5" stroke="currentColor" stroke-width="1.5"/><rect x="12" y="3" width="5" height="5" rx="0.5" stroke="currentColor" stroke-width="1.5"/><rect x="3" y="12" width="5" height="5" rx="0.5" stroke="currentColor" stroke-width="1.5"/><rect x="4.5" y="4.5" width="2" height="2" fill="currentColor"/><rect x="13.5" y="4.5" width="2" height="2" fill="currentColor"/><rect x="4.5" y="13.5" width="2" height="2" fill="currentColor"/><path d="M12 12h2v2h-2zM14 14h2v2h-2zM12 16h2M16 12v2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>',
                 'type' => 'base',
             ],
-            [
-                'key' => 'logo',
-                'label' => 'Logo',
-                'icon' => '<path d="M10 2.75L16.25 6.25V13.75L10 17.25L3.75 13.75V6.25L10 2.75Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M7.75 9.25L9.25 10.75L12.75 7.25" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>',
-                'type' => 'base',
-            ],
-            [
-                'key' => 'map',
-                'label' => 'Map',
-                'icon' => '<path d="M3.75 5.25L8.25 3.5L11.75 5L16.25 3.25V14.75L11.75 16.5L8.25 15L3.75 16.75V5.25Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M8.25 3.5V15M11.75 5V16.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="10" cy="9.5" r="1.25" fill="currentColor"/>',
-                'type' => 'base',
-            ],
-            [
-                'key' => 'stat',
-                'label' => 'Stat',
-                'icon' => '<path d="M4 15.5H16" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M6 13V9.75" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M10 13V6.75" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M14 13V4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>',
-                'type' => 'base',
-            ],
         ];
     }
 
