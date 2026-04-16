@@ -11,16 +11,16 @@
         </div>
     </div>
 
-    <div x-ref="canvasOverlay" class="lb-overlay is-hidden">
+    <div class="lb-overlay" x-show="selectedId !== null" x-cloak>
         <div class="lb-overlay-actions">
             <button
-                x-ref="btnSliceH"
                 type="button"
+                x-show="isLeafSelected()"
                 x-tooltip="{
                     content: 'Split horizontally',
                     theme: $store.theme,
                 }"
-                x-on:click.stop="if (selectedId) slice(selectedId, 'h')"
+                x-on:click.stop="slice(selectedId, 'h')"
                 class="lb-icon-button"
             >
                 <svg class="lb-icon" viewBox="0 0 20 20" fill="none">
@@ -28,13 +28,13 @@
                 </svg>
             </button>
             <button
-                x-ref="btnSliceV"
                 type="button"
+                x-show="isLeafSelected()"
                 x-tooltip="{
                     content: 'Split vertically',
                     theme: $store.theme,
                 }"
-                x-on:click.stop="if (selectedId) slice(selectedId, 'v')"
+                x-on:click.stop="slice(selectedId, 'v')"
                 class="lb-icon-button"
             >
                 <svg class="lb-icon" viewBox="0 0 20 20" fill="none">
@@ -42,13 +42,13 @@
                 </svg>
             </button>
             <button
-                x-ref="btnDelete"
                 type="button"
+                x-show="selectedId !== 'root'"
                 x-tooltip="{
                     content: 'Delete section',
                     theme: $store.theme,
                 }"
-                x-on:click.stop="if (selectedId) deleteNode(selectedId)"
+                x-on:click.stop="deleteNode(selectedId)"
                 class="lb-icon-button lb-icon-button--danger"
             >
                 <svg class="lb-icon" viewBox="0 0 20 20" fill="none">

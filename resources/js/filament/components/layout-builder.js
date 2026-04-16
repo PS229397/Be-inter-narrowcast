@@ -29,9 +29,7 @@ export default function layoutBuilder(config) {
         generatedNodeIndex: 0,
         selectedId: null,
         isDragging: false,
-        themeObserver: null,
         stateSignature: null,
-        themeSignature: null,
         nodesById: new Map(),
         parentsById: new Map(),
         elementsById: new Map(),
@@ -42,7 +40,6 @@ export default function layoutBuilder(config) {
         init() {
             this._initComponentIndexes()
             this._initGrid()
-            this.observeTheme()
 
             this.$watch('state', (value) => {
                 const normalized = this._normalizeGrid(value)
@@ -67,27 +64,6 @@ export default function layoutBuilder(config) {
             this.$nextTick(() => this.renderStructure())
         },
 
-        observeTheme() {
-            this.themeObserver?.disconnect()
-            this.themeSignature = this._themeSignature()
-
-            this.themeObserver = new MutationObserver(() => {
-                const signature = this._themeSignature()
-
-                if (signature === this.themeSignature) {
-                    return
-                }
-
-                this.themeSignature = signature
-                this.$nextTick(() => this.renderStructure())
-            })
-
-            this.themeObserver.observe(document.documentElement, {
-                attributes: true,
-                attributeFilter: ['class', 'style'],
-            })
-        },
-
         stageStyle() {
             if (this.standalone) {
                 if (this.orientation === 'portrait') {
@@ -102,10 +78,6 @@ export default function layoutBuilder(config) {
             }
 
             return 'aspect-ratio: 960 / 540; max-width: 100%; max-height: 520px;'
-        },
-
-        _themeSignature() {
-            return `${document.documentElement.className}|${document.documentElement.getAttribute('style') ?? ''}`
         },
 
         _clone(value) {
@@ -454,25 +426,10 @@ export default function layoutBuilder(config) {
             return this.selectedNode()?.component ?? null
         },
 
-        themeColors() {
-            const styles = getComputedStyle(this.$root)
-            const read = (name, fallback) =>
-                styles.getPropertyValue(name).trim() || fallback
+        isLeafSelected() {
+            const node = this.selectedNode()
 
-            return {
-                dashIdle: read('--lb-accent-border', 'rgba(245, 158, 11, 0.3)'),
-                dashHover: read('--lb-accent-outline', 'rgba(245, 158, 11, 0.7)'),
-                dashActive: read('--lb-accent', 'rgba(245, 158, 11, 1)'),
-                leafBg: read('--lb-node-bg', 'rgba(17, 17, 20, 0.55)'),
-                leafHoverBg: read('--lb-node-hover-bg', 'rgba(245, 158, 11, 0.1)'),
-                iconColor: read('--lb-node-icon', 'rgba(245, 158, 11, 0.35)'),
-                iconColorSoft: read('--lb-node-icon-soft', 'rgba(245, 158, 11, 0.5)'),
-                customLabelColor: read('--lb-node-label', 'rgba(245, 158, 11, 0.72)'),
-                pillText: read('--lb-pill-text', 'rgba(161, 161, 170, 0.7)'),
-                pillBg: read('--lb-pill-bg', 'rgba(17, 17, 20, 0.7)'),
-                pillBorder: read('--lb-pill-border', 'rgba(161, 161, 170, 0.12)'),
-                selection: read('--lb-accent-outline', 'rgba(245, 158, 11, 0.75)'),
-            }
+            return node !== null && (node.children ?? []).length === 0
         },
 
         fmtPill(wPct, hPct) {
@@ -493,20 +450,9 @@ export default function layoutBuilder(config) {
             return map
         },
 
-        applyCornerRadius(el, corners) {
-            el.style.borderTopLeftRadius = corners.topLeft ? this.canvasCornerRadius : '0'
-            el.style.borderTopRightRadius = corners.topRight ? this.canvasCornerRadius : '0'
-            el.style.borderBottomRightRadius = corners.bottomRight
-                ? this.canvasCornerRadius
-                : '0'
-            el.style.borderBottomLeftRadius = corners.bottomLeft
-                ? this.canvasCornerRadius
-                : '0'
-        },
-
         selectNode(nodeId) {
             this.selectedId = nodeId
-            this.renderStructure()
+            this.renderSelection()
         },
 
         clearSelection() {
@@ -515,11 +461,7 @@ export default function layoutBuilder(config) {
             }
 
             this.selectedId = null
-            this.renderStructure()
-        },
-
-        render() {
-            this.renderStructure()
+            this.renderSelection()
         },
 
         renderStructure() {
@@ -535,57 +477,27 @@ export default function layoutBuilder(config) {
 
             container.innerHTML = ''
 
-            const theme = this.themeColors()
             const rootEl = this.buildEl(
                 this.grid,
                 100,
                 100,
                 this.leafOrderMap,
                 { topLeft: true, topRight: true, bottomRight: true, bottomLeft: true },
-                theme,
             )
             rootEl.style.position = 'absolute'
             rootEl.style.inset = '0'
             container.appendChild(rootEl)
 
-            this.renderSelection(theme)
+            this.renderSelection()
         },
 
-        renderSelection(theme = this.themeColors()) {
+        renderSelection() {
             for (const [nodeId, el] of this.elementsById) {
-                const node = this.nodesById.get(nodeId)
-
-                if (!node) {
-                    continue
-                }
-
-                const isSelected = nodeId === this.selectedId
-
-                el.style.outline = isSelected ? `2px solid ${theme.selection}` : 'none'
-                el.style.outlineOffset = isSelected ? '-2px' : '0'
-
-                if ((node.children ?? []).length === 0) {
-                    el.style.backgroundColor = theme.leafBg
-                }
-            }
-
-            const selectedNode = this.selectedId ? this.nodesById.get(this.selectedId) : null
-            const hasSelection = !!selectedNode
-            const overlay = this.$refs.canvasOverlay
-
-            if (overlay) {
-                overlay.classList.toggle('is-hidden', !hasSelection)
-
-                if (hasSelection) {
-                    const isLeaf = (selectedNode.children ?? []).length === 0
-                    this.$refs.btnSliceH?.classList.toggle('is-hidden', !isLeaf)
-                    this.$refs.btnSliceV?.classList.toggle('is-hidden', !isLeaf)
-                    this.$refs.btnDelete?.classList.toggle('is-hidden', this.selectedId === 'root')
-                }
+                el.classList.toggle('is-selected', nodeId === this.selectedId)
             }
         },
 
-        renderNodeContent(nodeId, theme = this.themeColors()) {
+        renderNodeContent(nodeId) {
             const node = this.nodesById.get(nodeId)
             const el = this.elementsById.get(nodeId)
 
@@ -593,11 +505,11 @@ export default function layoutBuilder(config) {
                 return
             }
 
-            this._renderLeafCenter(el, node, theme, this.leafOrderMap)
-            this.renderSelection(theme)
+            this._renderLeafCenter(el, node, this.leafOrderMap)
+            this.renderSelection()
         },
 
-        _renderLeafCenter(el, node, theme, order = this.leafOrderMap) {
+        _renderLeafCenter(el, node, order = this.leafOrderMap) {
             let center = el.querySelector('[data-node-center]')
 
             if (!center) {
@@ -607,21 +519,19 @@ export default function layoutBuilder(config) {
             }
 
             center.innerHTML = ''
-            center.style.cssText =
-                'position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:4;user-select:none;'
+            center.className = 'lb-node-center'
 
             const componentIcon = this.getComponentIcon(node.component)
 
             if (componentIcon) {
-                center.innerHTML = `<svg viewBox="0 0 20 20" fill="none" style="width:56px;height:56px;color:${theme.iconColorSoft}">${componentIcon}</svg>`
+                center.innerHTML = `<svg viewBox="0 0 20 20" fill="none" class="lb-node-icon">${componentIcon}</svg>`
 
                 if (this.isCustomComponent(node.component)) {
                     const label = this.getCustomComponent(node.component)?.title ?? 'Custom'
-                    center.style.flexDirection = 'column'
-                    center.style.gap = '8px'
+                    center.classList.add('lb-node-center--labeled')
 
                     const labelEl = document.createElement('div')
-                    labelEl.style.cssText = `max-width:80%;font-size:12px;font-weight:600;line-height:1.2;color:${theme.customLabelColor};text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;`
+                    labelEl.className = 'lb-node-label'
                     labelEl.textContent = label
                     center.appendChild(labelEl)
                 }
@@ -629,10 +539,7 @@ export default function layoutBuilder(config) {
                 return
             }
 
-            center.style.fontSize = '48px'
-            center.style.fontWeight = '700'
-            center.style.color = theme.iconColor
-            center.style.fontFamily = 'monospace'
+            center.classList.add('lb-node-number')
             center.textContent = order.get(node.id) ?? ''
         },
 
@@ -642,12 +549,10 @@ export default function layoutBuilder(config) {
             hPct = 100,
             order = this.leafOrderMap,
             corners = { topLeft: true, topRight: true, bottomRight: true, bottomLeft: true },
-            theme = this.themeColors(),
         ) {
             const el = document.createElement('div')
             el.dataset.nodeId = node.id
-            el.style.cssText =
-                'width:100%;height:100%;position:relative;overflow:hidden;box-sizing:border-box;'
+            el.classList.add('lb-node')
             this.elementsById.set(node.id, el)
 
             if ((node.children ?? []).length > 0) {
@@ -681,47 +586,29 @@ export default function layoutBuilder(config) {
                           bottomLeft: false,
                       }
 
-                el.style.display = 'flex'
-                el.style.flexDirection = isHorizontal ? 'column' : 'row'
+                el.classList.add(isHorizontal ? 'lb-node--split-h' : 'lb-node--split-v')
 
                 const firstWrapper = document.createElement('div')
-                firstWrapper.style.cssText = isHorizontal
-                    ? `flex:0 0 ${split}%;min-height:0;position:relative;overflow:hidden;`
-                    : `flex:0 0 ${split}%;min-width:0;position:relative;overflow:hidden;`
-
-                const dashedBg = (color, direction) =>
-                    direction === 'h'
-                        ? `repeating-linear-gradient(to right,${color} 0,${color} 4px,transparent 4px,transparent 8px)`
-                        : `repeating-linear-gradient(to bottom,${color} 0,${color} 4px,transparent 4px,transparent 8px)`
+                firstWrapper.className = isHorizontal
+                    ? 'lb-node-child--first-h'
+                    : 'lb-node-child--first-v'
+                firstWrapper.style.flex = `0 0 ${split}%`
 
                 const handle = document.createElement('div')
-                handle.style.cssText = isHorizontal
-                    ? 'box-sizing:content-box;flex:0 0 1px;padding:7px 0;margin:-7px 0;cursor:row-resize;position:relative;z-index:10;display:flex;align-items:center;'
-                    : 'box-sizing:content-box;flex:0 0 1px;padding:0 7px;margin:0 -7px;cursor:col-resize;position:relative;z-index:10;display:flex;justify-content:center;'
+                handle.className = `lb-handle lb-handle--${isHorizontal ? 'h' : 'v'}`
 
                 const line = document.createElement('div')
-                line.style.cssText = isHorizontal
-                    ? 'width:100%;height:1px;transition:background 0.15s;'
-                    : 'height:100%;width:1px;transition:background 0.15s;'
-                line.style.background = dashedBg(theme.dashIdle, node.direction)
+                line.className = `lb-handle-line lb-handle-line--${isHorizontal ? 'h' : 'v'}`
                 handle.appendChild(line)
 
-                handle.addEventListener('mouseenter', () => {
-                    line.style.background = dashedBg(theme.dashHover, node.direction)
-                })
-                handle.addEventListener('mouseleave', () => {
-                    if (!handle._drag) {
-                        line.style.background = dashedBg(theme.dashIdle, node.direction)
-                    }
-                })
                 handle.addEventListener('click', (event) => event.stopPropagation())
 
                 handle.addEventListener('mousedown', (event) => {
                     event.stopPropagation()
                     event.preventDefault()
-                    handle._drag = true
+                    handle.classList.add('is-dragging')
                     this.isDragging = true
-                    line.style.background = dashedBg(theme.dashActive, node.direction)
+                    this.$refs.gridContainer?.classList.add('is-dragging')
 
                     const rect = el.getBoundingClientRect()
                     const onMove = (moveEvent) => {
@@ -752,9 +639,9 @@ export default function layoutBuilder(config) {
                     }
 
                     const onUp = () => {
-                        handle._drag = false
+                        handle.classList.remove('is-dragging')
                         this.isDragging = false
-                        line.style.background = dashedBg(theme.dashIdle, node.direction)
+                        this.$refs.gridContainer?.classList.remove('is-dragging')
                         this._save()
                         document.removeEventListener('mousemove', onMove)
                         document.removeEventListener('mouseup', onUp)
@@ -765,9 +652,9 @@ export default function layoutBuilder(config) {
                 })
 
                 const secondWrapper = document.createElement('div')
-                secondWrapper.style.cssText = isHorizontal
-                    ? 'flex:1;min-height:0;position:relative;overflow:hidden;'
-                    : 'flex:1;min-width:0;position:relative;overflow:hidden;'
+                secondWrapper.className = isHorizontal
+                    ? 'lb-node-child--second-h'
+                    : 'lb-node-child--second-v'
 
                 firstWrapper.appendChild(
                     this.buildEl(
@@ -776,7 +663,6 @@ export default function layoutBuilder(config) {
                         isHorizontal ? (hPct * split) / 100 : hPct,
                         order,
                         child1Corners,
-                        theme,
                     ),
                 )
                 secondWrapper.appendChild(
@@ -786,7 +672,6 @@ export default function layoutBuilder(config) {
                         isHorizontal ? (hPct * (100 - split)) / 100 : hPct,
                         order,
                         child2Corners,
-                        theme,
                     ),
                 )
 
@@ -794,29 +679,19 @@ export default function layoutBuilder(config) {
                 el.appendChild(handle)
                 el.appendChild(secondWrapper)
             } else {
-                this.applyCornerRadius(el, corners)
-                el.style.backgroundColor = theme.leafBg
-                el.style.cursor = 'pointer'
-                el.style.transition = 'background-color 0.15s'
+                el.classList.add('lb-node--leaf')
+                el.classList.toggle('lb-node--tl', corners.topLeft)
+                el.classList.toggle('lb-node--tr', corners.topRight)
+                el.classList.toggle('lb-node--br', corners.bottomRight)
+                el.classList.toggle('lb-node--bl', corners.bottomLeft)
 
-                this._renderLeafCenter(el, node, theme, order)
+                this._renderLeafCenter(el, node, order)
 
                 const pill = document.createElement('div')
                 pill.dataset.pctLabel = ''
+                pill.className = 'lb-node-pill'
                 pill.textContent = this.fmtPill(wPct, hPct)
-                pill.style.cssText = `position:absolute;bottom:5px;left:6px;font-size:10px;line-height:1;color:${theme.pillText};background:${theme.pillBg};border:1px solid ${theme.pillBorder};border-radius:999px;padding:3px 8px;pointer-events:none;z-index:5;user-select:none;font-family:monospace;white-space:nowrap;`
                 el.appendChild(pill)
-
-                el.addEventListener('mouseenter', () => {
-                    if (!this.isDragging && node.id !== this.selectedId) {
-                        el.style.backgroundColor = theme.leafHoverBg
-                    }
-                })
-                el.addEventListener('mouseleave', () => {
-                    if (!this.isDragging && node.id !== this.selectedId) {
-                        el.style.backgroundColor = theme.leafBg
-                    }
-                })
             }
 
             el.addEventListener('click', (event) => {

@@ -137,9 +137,6 @@
     z-index: 20;
 }
 
-.lb-overlay.is-hidden {
-    display: none;
-}
 
 .lb-overlay-actions {
     pointer-events: auto;
@@ -184,6 +181,192 @@
 .lb-icon {
     width: 1.25rem;
     height: 1.25rem;
+}
+
+/* ── Canvas node wrappers ──────────────────────────────────────── */
+
+.lb-node {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    overflow: hidden;
+    box-sizing: border-box;
+}
+
+.lb-node--split-h {
+    display: flex;
+    flex-direction: column;
+}
+
+.lb-node--split-v {
+    display: flex;
+    flex-direction: row;
+}
+
+/* Split child wrappers — first child flex is set inline (dynamic %) */
+.lb-node-child--first-h,
+.lb-node-child--second-h {
+    min-height: 0;
+    position: relative;
+    overflow: hidden;
+}
+
+.lb-node-child--first-v,
+.lb-node-child--second-v {
+    min-width: 0;
+    position: relative;
+    overflow: hidden;
+}
+
+.lb-node-child--second-h,
+.lb-node-child--second-v {
+    flex: 1;
+}
+
+/* ── Resize handle ─────────────────────────────────────────────── */
+
+.lb-handle {
+    flex: 0 0 1px;
+    box-sizing: content-box;
+    position: relative;
+    z-index: 10;
+    display: flex;
+}
+
+.lb-handle--h {
+    padding: 7px 0;
+    margin: -7px 0;
+    cursor: row-resize;
+    align-items: center;
+}
+
+.lb-handle--v {
+    padding: 0 7px;
+    margin: 0 -7px;
+    cursor: col-resize;
+    justify-content: center;
+}
+
+.lb-handle-line {
+    --handle-color: var(--lb-accent-border);
+}
+
+.lb-handle-line--h {
+    width: 100%;
+    height: 1px;
+    background: repeating-linear-gradient(
+        to right,
+        var(--handle-color) 0,
+        var(--handle-color) 4px,
+        transparent 4px,
+        transparent 8px
+    );
+}
+
+.lb-handle-line--v {
+    height: 100%;
+    width: 1px;
+    background: repeating-linear-gradient(
+        to bottom,
+        var(--handle-color) 0,
+        var(--handle-color) 4px,
+        transparent 4px,
+        transparent 8px
+    );
+}
+
+.lb-handle:hover .lb-handle-line {
+    --handle-color: var(--lb-accent-outline);
+}
+
+.lb-handle.is-dragging .lb-handle-line {
+    --handle-color: var(--lb-accent);
+}
+
+/* ── Leaf node ─────────────────────────────────────────────────── */
+
+.lb-node--leaf {
+    background-color: var(--lb-node-bg);
+    cursor: pointer;
+    transition: background-color 0.15s;
+}
+
+.lb-grid:not(.is-dragging) .lb-node--leaf:not(.is-selected):hover {
+    background-color: var(--lb-node-hover-bg);
+}
+
+.lb-node--leaf.is-selected {
+    outline: 2px solid var(--lb-accent-outline);
+    outline-offset: -2px;
+}
+
+/* Corner radius utilities — applied per-leaf based on position in tree */
+.lb-node--tl { border-top-left-radius: 0.75rem; }
+.lb-node--tr { border-top-right-radius: 0.75rem; }
+.lb-node--br { border-bottom-right-radius: 0.75rem; }
+.lb-node--bl { border-bottom-left-radius: 0.75rem; }
+
+/* ── Leaf center overlay ───────────────────────────────────────── */
+
+.lb-node-center {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    z-index: 4;
+    user-select: none;
+}
+
+.lb-node-center--labeled {
+    flex-direction: column;
+    gap: 8px;
+}
+
+.lb-node-icon {
+    width: 56px;
+    height: 56px;
+    color: var(--lb-node-icon-soft);
+}
+
+.lb-node-number {
+    font-size: 48px;
+    font-weight: 700;
+    color: var(--lb-node-icon);
+    font-family: monospace;
+}
+
+.lb-node-label {
+    max-width: 80%;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.2;
+    color: var(--lb-node-label);
+    text-align: center;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* ── Size pill ─────────────────────────────────────────────────── */
+
+.lb-node-pill {
+    position: absolute;
+    bottom: 5px;
+    left: 6px;
+    font-size: 10px;
+    line-height: 1;
+    color: var(--lb-pill-text);
+    background: var(--lb-pill-bg);
+    border: 1px solid var(--lb-pill-border);
+    border-radius: 999px;
+    padding: 3px 8px;
+    pointer-events: none;
+    z-index: 5;
+    user-select: none;
+    font-family: monospace;
+    white-space: nowrap;
 }
 
 .lb-tab-button:hover,
