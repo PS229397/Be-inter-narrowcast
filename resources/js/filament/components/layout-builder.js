@@ -30,33 +30,56 @@ export default function layoutBuilder(config) {
         selectedId: null,
         isDragging: false,
         themeObserver: null,
+        stateSignature: null,
+        themeSignature: null,
+        nodesById: new Map(),
+        parentsById: new Map(),
+        elementsById: new Map(),
+        leafOrderMap: new Map(),
+        baseComponentsByKey: new Map(),
+        customComponentsByKey: new Map(),
 
         init() {
+            this._initComponentIndexes()
             this._initGrid()
             this.observeTheme()
 
             this.$watch('state', (value) => {
                 const normalized = this._normalizeGrid(value)
+                const signature = this._serializeGrid(normalized)
 
-                if (JSON.stringify(normalized) !== JSON.stringify(this.grid)) {
-                    this.grid = normalized
-                    this.nodeCounter = this._maxNodeId(this.grid)
-                    this.$nextTick(() => this.render())
+                if (signature === this.stateSignature) {
+                    return
                 }
+
+                this.grid = normalized
+                this.nodeCounter = this._maxNodeId(this.grid)
+                this.stateSignature = signature
+                this._rebuildGridIndexes()
+
+                this.$nextTick(() => this.renderStructure())
             })
 
             this.$watch('orientation', () => {
-                this.$nextTick(() => this.render())
+                this.$nextTick(() => this.renderStructure())
             })
 
-            this.$nextTick(() => this.render())
+            this.$nextTick(() => this.renderStructure())
         },
 
         observeTheme() {
             this.themeObserver?.disconnect()
+            this.themeSignature = this._themeSignature()
 
             this.themeObserver = new MutationObserver(() => {
-                this.$nextTick(() => this.render())
+                const signature = this._themeSignature()
+
+                if (signature === this.themeSignature) {
+                    return
+                }
+
+                this.themeSignature = signature
+                this.$nextTick(() => this.renderStructure())
             })
 
             this.themeObserver.observe(document.documentElement, {
@@ -81,13 +104,68 @@ export default function layoutBuilder(config) {
             return 'aspect-ratio: 960 / 540; max-width: 100%; max-height: 520px;'
         },
 
+        _themeSignature() {
+            return `${document.documentElement.className}|${document.documentElement.getAttribute('style') ?? ''}`
+        },
+
         _clone(value) {
             return JSON.parse(JSON.stringify(value))
+        },
+
+        _serializeGrid(value) {
+            return JSON.stringify(value)
+        },
+
+        _initComponentIndexes() {
+            this.baseComponentsByKey = new Map(
+                this.baseComponents.map((component) => [component.key, component]),
+            )
+            this.customComponentsByKey = new Map(
+                this.customComponents.map((component) => [component.key, component]),
+            )
         },
 
         _initGrid() {
             this.grid = this._normalizeGrid(this.state)
             this.nodeCounter = this._maxNodeId(this.grid)
+            this.stateSignature = this._serializeGrid(this.grid)
+            this._rebuildGridIndexes()
+        },
+
+        _rebuildGridIndexes() {
+            const nodesById = new Map()
+            const parentsById = new Map()
+            const leafOrderMap = new Map()
+            let leafIndex = 0
+
+            const walk = (node, parent = null) => {
+                nodesById.set(node.id, node)
+
+                if (parent) {
+                    parentsById.set(node.id, parent)
+                }
+
+                const children = node.children ?? []
+
+                if (children.length === 0) {
+                    leafOrderMap.set(node.id, ++leafIndex)
+
+                    return
+                }
+
+                children.forEach((child) => walk(child, node))
+            }
+
+            walk(this.grid)
+
+            if (this.selectedId && !nodesById.has(this.selectedId)) {
+                this.selectedId = null
+            }
+
+            this.nodesById = nodesById
+            this.parentsById = parentsById
+            this.leafOrderMap = leafOrderMap
+            this.elementsById = new Map()
         },
 
         _emptyGrid() {
@@ -183,11 +261,11 @@ export default function layoutBuilder(config) {
         },
 
         _resolveComponentType(key) {
-            if (this.baseComponents.some((component) => component.key === key)) {
+            if (this.baseComponentsByKey.has(key)) {
                 return 'base'
             }
 
-            if (/^custom:\d+$/.test(key)) {
+            if (this.customComponentsByKey.has(key) || /^custom:\d+$/.test(key)) {
                 return 'custom'
             }
 
@@ -227,39 +305,16 @@ export default function layoutBuilder(config) {
         _save() {
             const next = this._clone(this.grid)
             next.version = this.emptyGrid.version ?? 1
+            this.stateSignature = this._serializeGrid(next)
             this.state = next
         },
 
-        findNode(node, id) {
-            if (node.id === id) {
-                return node
-            }
-
-            for (const child of node.children ?? []) {
-                const hit = this.findNode(child, id)
-
-                if (hit) {
-                    return hit
-                }
-            }
-
-            return null
+        findNode(_node, id) {
+            return this.nodesById.get(id) ?? null
         },
 
-        findParent(node, id) {
-            for (const child of node.children ?? []) {
-                if (child.id === id) {
-                    return node
-                }
-
-                const hit = this.findParent(child, id)
-
-                if (hit) {
-                    return hit
-                }
-            }
-
-            return null
+        findParent(_node, id) {
+            return this.parentsById.get(id) ?? null
         },
 
         slice(nodeId, direction) {
@@ -284,8 +339,9 @@ export default function layoutBuilder(config) {
             node.children[0].componentConfig = inheritedComponentConfig
             this.selectedId = node.children[0].id
 
+            this._rebuildGridIndexes()
             this._save()
-            this.render()
+            this.renderStructure()
         },
 
         deleteNode(nodeId) {
@@ -313,8 +369,9 @@ export default function layoutBuilder(config) {
             }
 
             this.selectedId = null
+            this._rebuildGridIndexes()
             this._save()
-            this.render()
+            this.renderStructure()
         },
 
         clearCanvas() {
@@ -322,8 +379,10 @@ export default function layoutBuilder(config) {
             this.generatedNodeIndex = 0
             this.grid = this._emptyGrid()
             this.selectedId = null
+
+            this._rebuildGridIndexes()
             this._save()
-            this.render()
+            this.renderStructure()
         },
 
         assignComponent(type) {
@@ -348,7 +407,7 @@ export default function layoutBuilder(config) {
             }
 
             this._save()
-            this.render()
+            this.renderStructure()
         },
 
         isCustomComponent(type) {
@@ -360,7 +419,11 @@ export default function layoutBuilder(config) {
                 return null
             }
 
-            return this.customComponents.find((component) => component.key === type) ?? null
+            return (
+                this.customComponentsByKey.get(type) ??
+                this.customComponents.find((component) => component.key === type) ??
+                null
+            )
         },
 
         getComponentIcon(type) {
@@ -368,7 +431,9 @@ export default function layoutBuilder(config) {
                 return null
             }
 
-            const baseComponent = this.baseComponents.find((component) => component.key === type)
+            const baseComponent =
+                this.baseComponentsByKey.get(type) ??
+                this.baseComponents.find((component) => component.key === type)
 
             if (baseComponent) {
                 return baseComponent.icon
@@ -382,7 +447,7 @@ export default function layoutBuilder(config) {
                 return null
             }
 
-            return this.findNode(this.grid, this.selectedId)
+            return this.nodesById.get(this.selectedId) ?? null
         },
 
         selectedComponentKey() {
@@ -439,36 +504,80 @@ export default function layoutBuilder(config) {
                 : '0'
         },
 
+        selectNode(nodeId) {
+            this.selectedId = nodeId
+            this.renderStructure()
+        },
+
+        clearSelection() {
+            if (this.isDragging) {
+                return
+            }
+
+            this.selectedId = null
+            this.renderStructure()
+        },
+
         render() {
+            this.renderStructure()
+        },
+
+        renderStructure() {
             const container = this.$refs.gridContainer
 
             if (!container || !this.grid) {
                 return
             }
 
+            this._initComponentIndexes()
+            this.leafOrderMap = this.leafOrder(this.grid)
+            this.elementsById = new Map()
+
             container.innerHTML = ''
 
+            const theme = this.themeColors()
             const rootEl = this.buildEl(
                 this.grid,
                 100,
                 100,
-                this.leafOrder(this.grid),
+                this.leafOrderMap,
                 { topLeft: true, topRight: true, bottomRight: true, bottomLeft: true },
-                this.themeColors(),
+                theme,
             )
             rootEl.style.position = 'absolute'
             rootEl.style.inset = '0'
             container.appendChild(rootEl)
 
-            const selectedNode = this.selectedId ? this.findNode(this.grid, this.selectedId) : null
-            const hasSelection = !!this.selectedId
+            this.renderSelection(theme)
+        },
+
+        renderSelection(theme = this.themeColors()) {
+            for (const [nodeId, el] of this.elementsById) {
+                const node = this.nodesById.get(nodeId)
+
+                if (!node) {
+                    continue
+                }
+
+                const isSelected = nodeId === this.selectedId
+
+                el.style.outline = isSelected ? `2px solid ${theme.selection}` : 'none'
+                el.style.outlineOffset = isSelected ? '-2px' : '0'
+
+                if ((node.children ?? []).length === 0) {
+                    el.style.backgroundColor = theme.leafBg
+                }
+            }
+
+            const selectedNode = this.selectedId ? this.nodesById.get(this.selectedId) : null
+            const hasSelection = !!selectedNode
             const overlay = this.$refs.canvasOverlay
 
             if (overlay) {
                 overlay.classList.toggle('is-hidden', !hasSelection)
 
                 if (hasSelection) {
-                    const isLeaf = selectedNode && (selectedNode.children ?? []).length === 0
+                    const isLeaf = (selectedNode.children ?? []).length === 0
                     this.$refs.btnSliceH?.classList.toggle('is-hidden', !isLeaf)
                     this.$refs.btnSliceV?.classList.toggle('is-hidden', !isLeaf)
                     this.$refs.btnDelete?.classList.toggle('is-hidden', this.selectedId === 'root')
@@ -476,11 +585,62 @@ export default function layoutBuilder(config) {
             }
         },
 
+        renderNodeContent(nodeId, theme = this.themeColors()) {
+            const node = this.nodesById.get(nodeId)
+            const el = this.elementsById.get(nodeId)
+
+            if (!node || !el || (node.children ?? []).length > 0) {
+                return
+            }
+
+            this._renderLeafCenter(el, node, theme, this.leafOrderMap)
+            this.renderSelection(theme)
+        },
+
+        _renderLeafCenter(el, node, theme, order = this.leafOrderMap) {
+            let center = el.querySelector('[data-node-center]')
+
+            if (!center) {
+                center = document.createElement('div')
+                center.dataset.nodeCenter = ''
+                el.appendChild(center)
+            }
+
+            center.innerHTML = ''
+            center.style.cssText =
+                'position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:4;user-select:none;'
+
+            const componentIcon = this.getComponentIcon(node.component)
+
+            if (componentIcon) {
+                center.innerHTML = `<svg viewBox="0 0 20 20" fill="none" style="width:56px;height:56px;color:${theme.iconColorSoft}">${componentIcon}</svg>`
+
+                if (this.isCustomComponent(node.component)) {
+                    const label = this.getCustomComponent(node.component)?.title ?? 'Custom'
+                    center.style.flexDirection = 'column'
+                    center.style.gap = '8px'
+
+                    const labelEl = document.createElement('div')
+                    labelEl.style.cssText = `max-width:80%;font-size:12px;font-weight:600;line-height:1.2;color:${theme.customLabelColor};text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;`
+                    labelEl.textContent = label
+                    center.appendChild(labelEl)
+                }
+
+                return
+            }
+
+            center.style.fontSize = '48px'
+            center.style.fontWeight = '700'
+            center.style.color = theme.iconColor
+            center.style.fontFamily = 'monospace'
+            center.textContent = order.get(node.id) ?? ''
+        },
+
         buildEl(
             node,
             wPct = 100,
             hPct = 100,
-            order = new Map(),
+            order = this.leafOrderMap,
             corners = { topLeft: true, topRight: true, bottomRight: true, bottomLeft: true },
             theme = this.themeColors(),
         ) {
@@ -488,6 +648,7 @@ export default function layoutBuilder(config) {
             el.dataset.nodeId = node.id
             el.style.cssText =
                 'width:100%;height:100%;position:relative;overflow:hidden;box-sizing:border-box;'
+            this.elementsById.set(node.id, el)
 
             if ((node.children ?? []).length > 0) {
                 const isHorizontal = node.direction === 'h'
@@ -638,34 +799,7 @@ export default function layoutBuilder(config) {
                 el.style.cursor = 'pointer'
                 el.style.transition = 'background-color 0.15s'
 
-                const center = document.createElement('div')
-                center.style.cssText =
-                    'position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:4;user-select:none;'
-
-                const componentIcon = this.getComponentIcon(node.component)
-
-                if (componentIcon) {
-                    center.innerHTML = `<svg viewBox="0 0 20 20" fill="none" style="width:56px;height:56px;color:${theme.iconColorSoft}">${componentIcon}</svg>`
-
-                    if (this.isCustomComponent(node.component)) {
-                        const label = this.getCustomComponent(node.component)?.title ?? 'Custom'
-                        center.style.flexDirection = 'column'
-                        center.style.gap = '8px'
-
-                        const labelEl = document.createElement('div')
-                        labelEl.style.cssText = `max-width:80%;font-size:12px;font-weight:600;line-height:1.2;color:${theme.customLabelColor};text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;`
-                        labelEl.textContent = label
-                        center.appendChild(labelEl)
-                    }
-                } else {
-                    center.style.fontSize = '48px'
-                    center.style.fontWeight = '700'
-                    center.style.color = theme.iconColor
-                    center.style.fontFamily = 'monospace'
-                    center.textContent = order.get(node.id) ?? ''
-                }
-
-                el.appendChild(center)
+                this._renderLeafCenter(el, node, theme, order)
 
                 const pill = document.createElement('div')
                 pill.dataset.pctLabel = ''
@@ -685,15 +819,9 @@ export default function layoutBuilder(config) {
                 })
             }
 
-            if (node.id === this.selectedId) {
-                el.style.outline = `2px solid ${theme.selection}`
-                el.style.outlineOffset = '-2px'
-            }
-
             el.addEventListener('click', (event) => {
                 event.stopPropagation()
-                this.selectedId = node.id
-                this.render()
+                this.selectNode(node.id)
             })
 
             return el

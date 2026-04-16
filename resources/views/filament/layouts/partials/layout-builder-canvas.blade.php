@@ -1,6 +1,6 @@
 <x-layout-builder.canvas-shell
     class="lb-canvas"
-    x-on:click="if (!isDragging) { selectedId = null; render(); }"
+    x-on:click="clearSelection()"
 >
     <div class="lb-stage-shell flex min-h-[26.25rem] items-center justify-center">
         <div
