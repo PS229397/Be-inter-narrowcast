@@ -7,7 +7,10 @@
 @endPushOnce
 
 <x-filament-panels::page>
-    <div class="lb-page-container mx-auto w-full max-w-[1440px] px-4 py-8 lg:py-16 xl:px-0">
+    <div
+        class="lb-page-container mx-auto mt-5 w-full px-4 py-8 [container-type:inline-size] [container-name:layout-page] lg:mt-0 lg:py-16 xl:px-0 lg:[--lb-page-width:min(var(--lb-page-max-width),calc(100vw-var(--lb-page-min-left-clearance)-var(--lb-page-min-right-clearance)))] lg:w-[min(100%,var(--lb-page-width))] lg:max-w-[var(--lb-page-width)] lg:ml-[max(var(--lb-page-min-left-clearance),calc((100vw-var(--lb-page-width))/2))] lg:mr-auto"
+        style="--lb-page-max-width: 1440px; --lb-page-min-left-clearance: 320px; --lb-page-min-right-clearance: 40px;"
+    >
         <div class="mb-4 flex items-center justify-between">
             <h1 x-data class="text-3xl font-bold text-gray-950 dark:text-white">
                 {{ $this instanceof \Filament\Resources\Pages\EditRecord ? 'Edit ' : 'Create ' }}<span x-text="$wire.get('data.title') || 'Untitled layout'"></span>

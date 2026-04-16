@@ -35,13 +35,13 @@
             })"
             x-init="init()"
             wire:key="layout-builder-{{ md5($statePath) }}-{{ $orientation }}-{{ $catalogKey }}"
-            class="lb-builder is-standalone mx-auto flex flex-col gap-3"
+            class="lb-builder is-standalone mx-auto flex w-full flex-col gap-3"
             {{ $builderExtraAttrs }}
         >
-            <div class="lb-standalone-layout">
+            <div class="lb-standalone-layout flex min-w-0 items-stretch [gap:var(--lb-standalone-gap)] [height:var(--lb-standalone-canvas-size)]">
                 @include('filament.layouts.partials.layout-builder-canvas')
 
-                <div class="lb-standalone-sidebar">
+                <div class="lb-standalone-sidebar flex min-h-0 min-w-[var(--lb-standalone-panel-min-size)] flex-col [gap:var(--lb-standalone-gap)] [flex:0_0_var(--lb-standalone-panel-size)] [width:var(--lb-standalone-panel-size)] [height:var(--lb-standalone-canvas-size)]">
                     @include('filament.layouts.partials.layout-builder-panel')
                 </div>
             </div>
@@ -61,10 +61,10 @@
             x-init="init()"
             wire:ignore
             wire:key="layout-builder-{{ md5($statePath) }}-{{ $orientation }}-{{ $catalogKey }}"
-            class="lb-builder"
+            class="lb-builder w-full"
             {{ $builderExtraAttrs }}
         >
-            <div class="lb-workspace">
+            <div class="lb-workspace grid gap-5 min-[80rem]:grid-cols-[minmax(0,1fr)_20rem] min-[80rem]:items-stretch">
                 @include('filament.layouts.partials.layout-builder-canvas')
                 @include('filament.layouts.partials.layout-builder-panel')
             </div>
