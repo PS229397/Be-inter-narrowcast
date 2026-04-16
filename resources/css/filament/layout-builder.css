@@ -9,6 +9,7 @@
     --lb-page-max-width: 1440px;
     --lb-page-min-left-clearance: 320px;
     --lb-page-min-right-clearance: 40px;
+    margin-top: 1.25rem;
 }
 
 @media (min-width: 64rem) {
@@ -26,6 +27,7 @@
             calc((100vw - var(--lb-page-width)) / 2)
         );
         margin-right: auto;
+        margin-top: 0;
     }
 }
 
