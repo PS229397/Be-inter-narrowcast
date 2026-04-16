@@ -2,7 +2,42 @@
     class="lb-panel flex h-full min-h-0 flex-1 flex-col"
     x-on:click.stop
 >
-    <div x-data="{ activeTab: 'base', panelMode: 'components' }" x-effect="if (panelMode === 'customize') { $nextTick(() => window.dispatchEvent(new Event('resize'))) }" class="lb-panel-scroll flex h-full min-h-0 flex-1 flex-col gap-4 overflow-visible">
+    <div
+        x-data="{
+            activeTab: 'base',
+            panelMode: 'components',
+            customSearch: '',
+            customPage: 1,
+            customPageSize: 6,
+            customComponentsList: @js($customComponents),
+            filteredCustomComponents() {
+                const term = this.customSearch.trim().toLowerCase()
+                if (!term) return this.customComponentsList
+
+                return this.customComponentsList.filter((component) => {
+                    const title = (component.title ?? '').toLowerCase()
+                    const customer = (component.customer ?? '').toLowerCase()
+                    return title.includes(term) || customer.includes(term)
+                })
+            },
+            customPageCount() {
+                return Math.max(1, Math.ceil(this.filteredCustomComponents().length / this.customPageSize))
+            },
+            paginatedCustomComponents() {
+                const start = (this.customPage - 1) * this.customPageSize
+                return this.filteredCustomComponents().slice(start, start + this.customPageSize)
+            },
+            goToCustomPage(page) {
+                const max = this.customPageCount()
+                this.customPage = Math.min(max, Math.max(1, page))
+            },
+            resetCustomPaging() {
+                this.customPage = 1
+            },
+        }"
+        x-effect="if (panelMode === 'customize') { $nextTick(() => window.dispatchEvent(new Event('resize'))) }"
+        class="lb-panel-scroll flex h-full min-h-0 flex-1 flex-col gap-4 overflow-visible"
+    >
         <x-layout-builder.card subtle class="lb-panel-card flex h-full min-h-0 flex-1 flex-col overflow-hidden">
 
             {{-- ── Components mode: tab bar ─────────────────────────── --}}
@@ -70,23 +105,43 @@
             {{-- ── Components mode: custom tab pane ────────────────── --}}
             <x-layout-builder.pane x-cloak x-show="panelMode === 'components' && activeTab === 'custom'">
                 @if (count($customComponents))
-                    <div class="lb-component-stack lb-component-stack--flush grid gap-2 p-0">
-                        @foreach ($customComponents as $customComponent)
-                            @php($customComponentKeyJs = \Illuminate\Support\Js::from($customComponent['key']))
-                            <x-layout-builder.component-row
-                                data-component="{{ $customComponent['key'] }}"
-                                x-on:click.stop="assignComponent({{ $customComponentKeyJs }})"
-                                x-bind:class="{ 'is-active': selectedComponentKey() === {{ $customComponentKeyJs }} }"
-                            >
-                                <svg class="lb-row-icon h-6 w-6" viewBox="0 0 20 20" fill="none" aria-hidden="true">{!! $customComponent['icon'] !!}</svg>
-                                <div class="lb-row-copy min-w-0">
-                                    <div class="lb-row-title overflow-hidden text-ellipsis whitespace-nowrap text-sm font-semibold text-inherit">{{ $customComponent['title'] }}</div>
-                                    @if (filled($customComponent['customer'] ?? null))
-                                        <div class="lb-row-meta mt-[0.15rem] overflow-hidden text-ellipsis whitespace-nowrap text-xs text-[var(--lb-text-soft)]">{{ $customComponent['customer'] }}</div>
-                                    @endif
-                                </div>
-                            </x-layout-builder.component-row>
-                        @endforeach
+                    <div class="flex h-full min-h-0 flex-col gap-3">
+                        <div>
+                            <input
+                                type="search"
+                                x-model="customSearch"
+                                x-on:input="resetCustomPaging()"
+                                placeholder="Search custom components..."
+                                class="w-full rounded-[0.85rem] border border-[var(--lb-border)] bg-[var(--lb-surface-muted)] px-3 py-2 text-sm text-[var(--lb-text)] placeholder:text-[var(--lb-text-soft)] focus:border-[var(--lb-accent-border)] focus:outline-none"
+                            />
+                        </div>
+
+                        <div class="lb-component-stack lb-component-stack--flush grid gap-2 p-0">
+                            <template x-for="component in paginatedCustomComponents()" :key="component.key">
+                                <x-layout-builder.component-row
+                                    x-bind:data-component="component.key"
+                                    x-on:click.stop="assignComponent(component.key)"
+                                    x-bind:class="{ 'is-active': selectedComponentKey() === component.key }"
+                                >
+                                    <svg class="lb-row-icon h-6 w-6" viewBox="0 0 20 20" fill="none" aria-hidden="true" x-html="component.icon"></svg>
+                                    <div class="lb-row-copy min-w-0">
+                                        <div class="lb-row-title overflow-hidden text-ellipsis whitespace-nowrap text-sm font-semibold text-inherit" x-text="component.title"></div>
+                                        <div
+                                            x-show="component.customer"
+                                            class="lb-row-meta mt-[0.15rem] overflow-hidden text-ellipsis whitespace-nowrap text-xs text-[var(--lb-text-soft)]"
+                                            x-text="component.customer"
+                                        ></div>
+                                    </div>
+                                </x-layout-builder.component-row>
+                            </template>
+                        </div>
+
+                        <div x-show="filteredCustomComponents().length === 0">
+                            <x-layout-builder.note dashed class="lb-empty-note">
+                                No custom components match your search.
+                            </x-layout-builder.note>
+                        </div>
+
                     </div>
                 @else
                     <x-layout-builder.note dashed class="lb-empty-note">
@@ -164,8 +219,42 @@
             <div
                 x-cloak
                 x-show="panelMode === 'components'"
-                class="border-t border-[var(--lb-border-soft)] p-3"
+                class="p-3"
             >
+                <div
+                    x-show="activeTab === 'custom'"
+                    class="flex items-center justify-between gap-2"
+                >
+                    <button
+                        type="button"
+                        x-on:click="goToCustomPage(customPage - 1)"
+                        x-bind:disabled="customPage <= 1"
+                        class="lb-tab-button h-8 w-8 rounded-full px-0 py-0 text-xs disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                        &lt;
+                    </button>
+                    <div class="text-xs font-medium text-[var(--lb-text-soft)]">
+                        <span x-text="customPage"></span>
+                        /
+                        <span x-text="customPageCount()"></span>
+                    </div>
+                    <button
+                        type="button"
+                        x-on:click="goToCustomPage(customPage + 1)"
+                        x-bind:disabled="customPage >= customPageCount()"
+                        class="lb-tab-button h-8 w-8 rounded-full px-0 py-0 text-xs disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                        &gt;
+                    </button>
+                </div>
+                <div
+                    x-show="activeTab === 'custom'"
+                    class="border-t border-[var(--lb-border-soft)]"
+                ></div>
+                <div
+                    x-show="activeTab === 'custom'"
+                    style="height: 15px;"
+                ></div>
                 <x-layout-builder.tab-button
                     x-on:click="panelMode = 'customize'"
                     class="w-full"
