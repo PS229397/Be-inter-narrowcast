@@ -15,6 +15,7 @@
             editorVersion: 0,
             livePreviewNodeId: null,
             persistedCustomCssByNode: {},
+            baselineCssByNode: {},
             customSearch: '',
             customPage: 1,
             customPageSize: 6,
@@ -54,6 +55,20 @@
                     'background-position: 0% 0%;',
                     'background-repeat: repeat;',
                 ].join('\n')
+            },
+            nodeBaselineCssTemplate(nodeId = null) {
+                const targetNodeId = nodeId ?? this.activeCustomizeNodeId
+                if (!targetNodeId) {
+                    return this.defaultCssTemplate()
+                }
+
+                const baseline = (this.baselineCssByNode[targetNodeId] ?? '').trim()
+
+                if (baseline !== '') {
+                    return this.fromEditorCss(baseline) ?? this.defaultCssTemplate()
+                }
+
+                return this.defaultCssTemplate()
             },
             toEditorCss(declarations) {
                 const raw = (declarations ?? '').trim()
@@ -197,6 +212,21 @@
                     window.setTimeout(() => this.syncEditorStates(), 260)
                 })
             },
+            resolveCssDeclForNode(nodeId, cssState) {
+                if (!nodeId) return this.fromEditorCss(cssState)
+
+                const baselineCss = (
+                    this.baselineCssByNode[nodeId] ??
+                    this.toEditorCss(this.defaultCssTemplate())
+                ).trim()
+                const normalizedState = (cssState ?? '').trim()
+
+                if (normalizedState === baselineCss) {
+                    return null
+                }
+
+                return this.fromEditorCss(cssState)
+            },
             disableCssDiagnostics() {
                 if (!window.monaco?.languages?.css?.cssDefaults) return
 
@@ -232,7 +262,7 @@
                 window.dispatchEvent(new CustomEvent('lb-save-customize', {
                     detail: {
                         nodeId,
-                        css: this.fromEditorCss(cssState),
+                        css: this.resolveCssDeclForNode(nodeId, cssState),
                         js: jsValue === '' || jsValue === '// Customize this section' ? null : jsState,
                     },
                 }))
@@ -257,8 +287,8 @@
                     detail: { nodeId, css: null, js: null },
                 }))
 
-                this.draftCss = this.toEditorCss(this.defaultCssTemplate())
                 this.draftJs = '// Customize this section'
+                this.draftCss = this.toEditorCss(this.nodeBaselineCssTemplate(nodeId))
                 this.syncEditorStatesLater()
                 this.$nextTick(() => {
                     this.startPreviewLoop()
@@ -321,12 +351,7 @@
                 }
 
                 const cssState = this.getEditorState('cssEditor', this.draftCss)
-                const hasPersistedCustomCss = this.persistedCustomCssByNode[nodeId] !== null
-                const cssTemplate = this.toEditorCss(this.defaultCssTemplate()).trim()
-                const isResetTemplate = (cssState ?? '').trim() === cssTemplate
-                const cssDecl = hasPersistedCustomCss || !isResetTemplate
-                    ? this.fromEditorCss(cssState)
-                    : null
+                const cssDecl = this.resolveCssDeclForNode(nodeId, cssState)
                 this.draftCss = cssState ?? this.draftCss
                 this.previewNodeId = nodeId
                 this.previewCss = cssDecl
@@ -363,6 +388,7 @@
             draftJs = jsFromEvent || '// Customize this section'
             if (activeCustomizeNodeId) {
                 persistedCustomCssByNode[activeCustomizeNodeId] = hasCustomCss ? cssFromEvent : null
+                baselineCssByNode[activeCustomizeNodeId] = draftCss
             }
             previewNodeId = null
             previewCss = null

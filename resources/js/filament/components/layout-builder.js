@@ -745,7 +745,12 @@ export default function layoutBuilder(config) {
             ]
 
             const declarations = properties
-                .map((property) => `${property}: ${styles.getPropertyValue(property).trim()};`)
+                .map((property) => {
+                    const rawValue = styles.getPropertyValue(property).trim()
+                    const value = this._normalizePresetValue(property, rawValue)
+
+                    return `${property}: ${value};`
+                })
                 .filter((declaration) => !declaration.endsWith(': ;'))
 
             if (isPreviewingNode) {
@@ -753,6 +758,29 @@ export default function layoutBuilder(config) {
             }
 
             return declarations.join('\n')
+        },
+
+        _normalizePresetValue(property, value) {
+            if (!value || !property.includes('color')) {
+                return value
+            }
+
+            const probe = document.createElement('div')
+            probe.style.position = 'absolute'
+            probe.style.left = '-9999px'
+            probe.style.top = '-9999px'
+            document.body.appendChild(probe)
+
+            try {
+                probe.style.setProperty(property, value)
+                const normalized = getComputedStyle(probe).getPropertyValue(property).trim()
+
+                return normalized || value
+            } catch (error) {
+                return value
+            } finally {
+                probe.remove()
+            }
         },
 
         fmtPill(wPct, hPct) {
