@@ -56,6 +56,14 @@
                     'background-repeat: repeat;',
                 ].join('\n')
             },
+            defaultJsTemplate() {
+                return [
+                    'function onLoad(el, node, builder) {',
+                    '}',
+                    '',
+                    'onLoad(el, node, builder);',
+                ].join('\n')
+            },
             nodeBaselineCssTemplate(nodeId = null) {
                 const targetNodeId = nodeId ?? this.activeCustomizeNodeId
                 if (!targetNodeId) {
@@ -265,9 +273,8 @@
                 this.draftCss = cssState ?? this.draftCss
                 this.draftJs = jsState ?? this.draftJs
                 const jsValue = (jsState ?? '').trim()
-                // Normalize whitespace so Monaco's compacted DOM readback
-                // (e.g. '//Customizethissection') still matches the placeholder.
-                const jsValueNorm = jsValue.replace(/\s+/g, ' ')
+                const jsDefaultNorm = this.defaultJsTemplate().replace(/\s+/g, '').trim()
+                const jsValueNorm = jsValue.replace(/\s+/g, '').trim()
 
                 this.stopPreviewLoop()
                 this.clearPreview()
@@ -275,7 +282,7 @@
                     detail: {
                         nodeId,
                         css: this.resolveCssDeclForNode(nodeId, cssState),
-                        js: jsValue === '' || jsValueNorm === '// Customize this section' ? null : jsState,
+                        js: jsValue === '' || jsValueNorm === jsDefaultNorm ? null : jsState,
                     },
                 }))
 
@@ -299,7 +306,7 @@
                     detail: { nodeId, css: null, js: null },
                 }))
 
-                this.draftJs = '// Customize this section'
+                this.draftJs = this.defaultJsTemplate()
                 this.draftCss = this.toEditorCss(this.nodeBaselineCssTemplate(nodeId))
                 this.syncEditorStatesLater()
                 this.$nextTick(() => {
@@ -397,7 +404,7 @@
             }
             activeCustomizeNodeId = nextNodeId
             draftCss = toEditorCss(cssFromEvent || defaultCssTemplate())
-            draftJs = jsFromEvent || '// Customize this section'
+            draftJs = jsFromEvent || defaultJsTemplate()
             if (activeCustomizeNodeId) {
                 persistedCustomCssByNode[activeCustomizeNodeId] = hasCustomCss ? cssFromEvent : null
                 baselineCssByNode[activeCustomizeNodeId] = draftCss
@@ -583,7 +590,7 @@
                                         isLiveDebounced: false,
                                         isLiveOnBlur: false,
                                         liveDebounce: null,
-                                        state: draftJs || '// Customize this section',
+                                        state: draftJs || defaultJsTemplate(),
                                         language: 'javascript',
                                     })"
                                     wire:ignore

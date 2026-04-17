@@ -281,6 +281,15 @@ export default function layoutBuilder(config) {
             ].join('\n')
         },
 
+        _defaultCustomizeJsTemplate() {
+            return [
+                'function onLoad(el, node, builder) {',
+                '}',
+                '',
+                'onLoad(el, node, builder);',
+            ].join('\n')
+        },
+
         _extractCssDeclarations(css) {
             const raw = this._normalizeCustomCode(css)
             if (!raw) {
@@ -341,9 +350,12 @@ export default function layoutBuilder(config) {
                 return false
             }
 
-            // Normalize whitespace so Monaco's compacted readback
-            // ("//Customizethissection") still matches the placeholder.
-            return normalized.trim().replace(/\s+/g, ' ') !== '// Customize this section'
+            const normalizedDefault = this._defaultCustomizeJsTemplate()
+                .trim()
+                .replace(/\s+/g, '')
+            const normalizedValue = normalized.trim().replace(/\s+/g, '')
+
+            return normalizedValue !== normalizedDefault
         },
 
         _nodeHasCustomCode(node) {
