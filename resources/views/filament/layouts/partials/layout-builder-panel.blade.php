@@ -13,6 +13,7 @@
             previewCss: null,
             previewIntervalId: null,
             editorVersion: 0,
+            livePreviewNodeId: null,
             persistedCustomCssByNode: {},
             customSearch: '',
             customPage: 1,
@@ -143,6 +144,38 @@
 
                 return editor.state ?? fallback
             },
+            applyNodeStyle(nodeId, cssDecl) {
+                if (!nodeId) return
+
+                const nodeEl = document.querySelector('.lb-grid [data-node-id=' + nodeId + ']')
+                if (!nodeEl) return
+
+                if (cssDecl && cssDecl.trim() !== '') {
+                    nodeEl.setAttribute('style', cssDecl)
+                } else {
+                    nodeEl.removeAttribute('style')
+                }
+            },
+            revertLivePreviewNode(nodeId = null) {
+                const targetNodeId = nodeId ?? this.livePreviewNodeId
+                if (!targetNodeId) return
+
+                this.applyPersistedNodeStyle(targetNodeId)
+                window.dispatchEvent(new CustomEvent('lb-preview-customize', {
+                    detail: { nodeId: targetNodeId, css: null },
+                }))
+
+                if (this.livePreviewNodeId === targetNodeId) {
+                    this.livePreviewNodeId = null
+                }
+            },
+            applyPersistedNodeStyle(nodeId) {
+                if (!nodeId) return
+
+                const persistedCssRaw = this.persistedCustomCssByNode[nodeId] ?? null
+                const persistedCss = this.fromEditorCss(persistedCssRaw)
+                this.applyNodeStyle(nodeId, persistedCss)
+            },
             syncEditorState(refName, value) {
                 const ref = this.resolveEditorRef(refName)
                 if (!ref) return
@@ -226,17 +259,7 @@
                 this.stopPreviewLoop()
 
                 if (nodeId) {
-                    const persistedCssRaw = this.persistedCustomCssByNode[nodeId] ?? null
-                    const persistedCss = this.fromEditorCss(persistedCssRaw)
-                    const previewEl = document.querySelector('.lb-grid [data-node-id=' + nodeId + ']')
-
-                    if (previewEl) {
-                        if (persistedCss && persistedCss.trim() !== '') {
-                            previewEl.setAttribute('style', persistedCss)
-                        } else {
-                            previewEl.removeAttribute('style')
-                        }
-                    }
+                    this.applyPersistedNodeStyle(nodeId)
                 }
 
                 if (nodeId) {
@@ -261,8 +284,30 @@
             flushPreview() {
                 if (this.panelMode !== 'customize') return
 
-                const nodeId = this.activeCustomizeNodeId ?? this.selectedLeafNodeIdFromDom()
+                const selectedNodeId = this.selectedLeafNodeIdFromDom()
+                const nodeId = selectedNodeId ?? this.activeCustomizeNodeId
                 if (!nodeId) return
+
+                if (selectedNodeId && this.activeCustomizeNodeId !== selectedNodeId) {
+                    const previousNodeId = this.previewNodeId
+                    if (previousNodeId && previousNodeId !== selectedNodeId) {
+                        this.applyPersistedNodeStyle(previousNodeId)
+                        window.dispatchEvent(new CustomEvent('lb-preview-customize', {
+                            detail: { nodeId: previousNodeId, css: null },
+                        }))
+                    }
+
+                    this.activeCustomizeNodeId = selectedNodeId
+                    this.previewNodeId = selectedNodeId
+                    this.previewCss = null
+                    window.dispatchEvent(new CustomEvent('lb-open-customize'))
+                    return
+                }
+
+                const previousNodeId = this.previewNodeId
+                if (previousNodeId && previousNodeId !== nodeId) {
+                    this.applyPersistedNodeStyle(previousNodeId)
+                }
 
                 const cssState = this.getEditorState('cssEditor', this.draftCss)
                 const cssDecl = this.fromEditorCss(cssState)
@@ -270,14 +315,8 @@
                 this.previewNodeId = nodeId
                 this.previewCss = cssDecl
 
-                const previewEl = document.querySelector('.lb-grid [data-node-id=' + nodeId + ']')
-                if (previewEl) {
-                    if (cssDecl && cssDecl.trim() !== '') {
-                        previewEl.setAttribute('style', cssDecl)
-                    } else {
-                        previewEl.removeAttribute('style')
-                    }
-                }
+                this.applyNodeStyle(nodeId, cssDecl)
+                this.livePreviewNodeId = nodeId
 
                 window.dispatchEvent(new CustomEvent('lb-preview-customize', {
                     detail: { nodeId, css: cssDecl },
@@ -299,7 +338,11 @@
             const cssFromEvent = ($event.detail.css ?? '').trim()
             const jsFromEvent = ($event.detail.js ?? '').trim()
             const hasCustomCss = !!$event.detail.hasCustomCss
-            activeCustomizeNodeId = $event.detail.nodeId ?? null
+            const nextNodeId = $event.detail.nodeId ?? null
+            if (panelMode === 'customize' && livePreviewNodeId && livePreviewNodeId !== nextNodeId) {
+                revertLivePreviewNode(livePreviewNodeId)
+            }
+            activeCustomizeNodeId = nextNodeId
             draftCss = toEditorCss(cssFromEvent || defaultCssTemplate())
             draftJs = jsFromEvent || '// Customize this section'
             if (activeCustomizeNodeId) {
