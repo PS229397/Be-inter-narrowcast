@@ -565,8 +565,12 @@ export default function layoutBuilder(config) {
 
         _dispatchCustomizePayload(node = this.selectedNode()) {
             const isLeaf = node !== null && (node.children ?? []).length === 0
+            const hasCustomCss =
+                isLeaf &&
+                typeof node.customCss === 'string' &&
+                node.customCss.trim() !== ''
             const computedCssPreset =
-                isLeaf && !(node.customCss ?? '').trim()
+                isLeaf && !hasCustomCss
                     ? this._buildComputedCssPreset(node.id)
                     : ''
 
@@ -576,6 +580,7 @@ export default function layoutBuilder(config) {
                         nodeId: isLeaf ? node.id : null,
                         css: isLeaf ? node.customCss ?? computedCssPreset : '',
                         js: isLeaf ? node.customJs ?? '' : '',
+                        hasCustomCss,
                     },
                 }),
             )

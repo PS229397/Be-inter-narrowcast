@@ -13,6 +13,7 @@
             previewCss: null,
             previewIntervalId: null,
             editorVersion: 0,
+            persistedCustomCssByNode: {},
             customSearch: '',
             customPage: 1,
             customPageSize: 6,
@@ -55,7 +56,20 @@
             },
             toEditorCss(declarations) {
                 const raw = (declarations ?? '').trim()
-                return raw || this.defaultCssTemplate()
+                const base = raw || this.defaultCssTemplate()
+
+                if (base.includes('{')) {
+                    return base
+                }
+
+                const body = base
+                    .split('\n')
+                    .map((line) => line.trim())
+                    .filter((line) => line.length > 0)
+                    .map((line) => '  ' + line)
+                    .join('\n')
+
+                return `.section {\n${body}\n}`
             },
             fromEditorCss(value) {
                 const raw = (value ?? '').trim()
@@ -100,9 +114,29 @@
                 }
                 return null
             },
+            readMonacoDomValue(ref) {
+                if (!ref) return null
+
+                const lines = ref.querySelectorAll('.view-lines .view-line')
+                if (!lines || lines.length === 0) {
+                    return null
+                }
+
+                const value = Array.from(lines)
+                    .map((line) => (line.textContent ?? '').replace(/\u00a0/g, ''))
+                    .join('\n')
+                    .trimEnd()
+
+                return value === '' ? '' : value
+            },
             getEditorState(refName, fallback = '') {
                 const ref = this.resolveEditorRef(refName)
                 if (!ref) return fallback
+
+                const domValue = this.readMonacoDomValue(ref)
+                if (domValue !== null) {
+                    return domValue
+                }
 
                 const editor = Alpine.$data(ref)
                 if (!editor) return fallback
@@ -130,11 +164,19 @@
                     window.setTimeout(() => this.syncEditorStates(), 260)
                 })
             },
+            disableCssDiagnostics() {
+                if (!window.monaco?.languages?.css?.cssDefaults) return
+
+                window.monaco.languages.css.cssDefaults.setDiagnosticsOptions({
+                    validate: false,
+                })
+            },
             openCustomize() {
                 if (!this.isLeafSelected()) return
 
                 this.activeCustomizeNodeId = this.selectedLeafNodeIdFromDom()
                 this.panelMode = 'customize'
+                this.disableCssDiagnostics()
                 this.startPreviewLoop()
                 this.$nextTick(() => {
                     window.dispatchEvent(new CustomEvent('lb-open-customize'))
@@ -180,8 +222,33 @@
                 this.$nextTick(() => this.flushPreview())
             },
             cancelCustomize() {
+                const nodeId = this.activeCustomizeNodeId ?? this.selectedLeafNodeIdFromDom()
                 this.stopPreviewLoop()
-                this.clearPreview()
+
+                if (nodeId) {
+                    const persistedCssRaw = this.persistedCustomCssByNode[nodeId] ?? null
+                    const persistedCss = this.fromEditorCss(persistedCssRaw)
+                    const previewEl = document.querySelector('.lb-grid [data-node-id=' + nodeId + ']')
+
+                    if (previewEl) {
+                        if (persistedCss && persistedCss.trim() !== '') {
+                            previewEl.setAttribute('style', persistedCss)
+                        } else {
+                            previewEl.removeAttribute('style')
+                        }
+                    }
+                }
+
+                if (nodeId) {
+                    window.dispatchEvent(new CustomEvent('lb-preview-customize', {
+                        detail: { nodeId, css: null },
+                    }))
+                } else {
+                    this.clearPreview()
+                }
+
+                this.previewNodeId = null
+                this.previewCss = null
                 this.panelMode = 'components'
             },
             clearPreview() {
@@ -194,26 +261,23 @@
             flushPreview() {
                 if (this.panelMode !== 'customize') return
 
-                const selectedNodeId = this.selectedLeafNodeIdFromDom()
-
-                if (selectedNodeId && selectedNodeId !== this.activeCustomizeNodeId) {
-                    this.activeCustomizeNodeId = selectedNodeId
-                    window.dispatchEvent(new CustomEvent('lb-open-customize'))
-                    return
-                }
-
-                const nodeId = this.activeCustomizeNodeId ?? selectedNodeId
+                const nodeId = this.activeCustomizeNodeId ?? this.selectedLeafNodeIdFromDom()
                 if (!nodeId) return
 
                 const cssState = this.getEditorState('cssEditor', this.draftCss)
                 const cssDecl = this.fromEditorCss(cssState)
-
-                if (this.previewNodeId === nodeId && this.previewCss === cssDecl) {
-                    return
-                }
-
+                this.draftCss = cssState ?? this.draftCss
                 this.previewNodeId = nodeId
                 this.previewCss = cssDecl
+
+                const previewEl = document.querySelector('.lb-grid [data-node-id=' + nodeId + ']')
+                if (previewEl) {
+                    if (cssDecl && cssDecl.trim() !== '') {
+                        previewEl.setAttribute('style', cssDecl)
+                    } else {
+                        previewEl.removeAttribute('style')
+                    }
+                }
 
                 window.dispatchEvent(new CustomEvent('lb-preview-customize', {
                     detail: { nodeId, css: cssDecl },
@@ -222,7 +286,7 @@
             startPreviewLoop() {
                 this.stopPreviewLoop()
                 this.flushPreview()
-                this.previewIntervalId = window.setInterval(() => this.flushPreview(), 180)
+                this.previewIntervalId = window.setInterval(() => this.flushPreview(), 90)
             },
             stopPreviewLoop() {
                 if (this.previewIntervalId !== null) {
@@ -234,15 +298,20 @@
         x-on:lb-load-customize.window="
             const cssFromEvent = ($event.detail.css ?? '').trim()
             const jsFromEvent = ($event.detail.js ?? '').trim()
+            const hasCustomCss = !!$event.detail.hasCustomCss
             activeCustomizeNodeId = $event.detail.nodeId ?? null
             draftCss = toEditorCss(cssFromEvent || defaultCssTemplate())
             draftJs = jsFromEvent || '// Customize this section'
+            if (activeCustomizeNodeId) {
+                persistedCustomCssByNode[activeCustomizeNodeId] = hasCustomCss ? cssFromEvent : null
+            }
             previewNodeId = null
             previewCss = null
             editorVersion++
             syncEditorStatesLater()
             if (panelMode === 'customize') {
                 $nextTick(() => {
+                    disableCssDiagnostics()
                     flushPreview()
                     window.dispatchEvent(new Event('resize'))
                 })
