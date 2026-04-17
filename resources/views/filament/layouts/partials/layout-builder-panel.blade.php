@@ -403,6 +403,15 @@
                 revertLivePreviewNode(livePreviewNodeId)
             }
             activeCustomizeNodeId = nextNodeId
+            if (!activeCustomizeNodeId) {
+                draftCss = ''
+                draftJs = ''
+                previewNodeId = null
+                previewCss = null
+                editorVersion++
+                syncEditorStatesLater()
+                return
+            }
             draftCss = toEditorCss(cssFromEvent || defaultCssTemplate())
             draftJs = jsFromEvent || defaultJsTemplate()
             if (activeCustomizeNodeId) {
@@ -560,7 +569,7 @@
                                         isLiveDebounced: false,
                                         isLiveOnBlur: false,
                                         liveDebounce: null,
-                                        state: draftCss || toEditorCss(defaultCssTemplate()),
+                                        state: draftCss,
                                         language: 'css',
                                     })"
                                     wire:ignore
@@ -590,7 +599,7 @@
                                         isLiveDebounced: false,
                                         isLiveOnBlur: false,
                                         liveDebounce: null,
-                                        state: draftJs || defaultJsTemplate(),
+                                        state: draftJs,
                                         language: 'javascript',
                                     })"
                                     wire:ignore
