@@ -243,8 +243,16 @@
                 const nodeId = this.activeCustomizeNodeId ?? this.selectedLeafNodeIdFromDom()
                 if (!nodeId) return
 
-                this.stopPreviewLoop()
-                this.clearPreview()
+                this.persistedCustomCssByNode[nodeId] = null
+                this.applyNodeStyle(nodeId, null)
+                window.dispatchEvent(new CustomEvent('lb-preview-customize', {
+                    detail: { nodeId, css: null },
+                }))
+                if (this.livePreviewNodeId === nodeId) {
+                    this.livePreviewNodeId = null
+                }
+                this.previewNodeId = null
+                this.previewCss = null
                 window.dispatchEvent(new CustomEvent('lb-save-customize', {
                     detail: { nodeId, css: null, js: null },
                 }))
@@ -252,7 +260,10 @@
                 this.draftCss = this.toEditorCss(this.defaultCssTemplate())
                 this.draftJs = '// Customize this section'
                 this.syncEditorStatesLater()
-                this.$nextTick(() => this.flushPreview())
+                this.$nextTick(() => {
+                    this.startPreviewLoop()
+                    this.flushPreview()
+                })
             },
             cancelCustomize() {
                 const nodeId = this.activeCustomizeNodeId ?? this.selectedLeafNodeIdFromDom()
@@ -310,7 +321,12 @@
                 }
 
                 const cssState = this.getEditorState('cssEditor', this.draftCss)
-                const cssDecl = this.fromEditorCss(cssState)
+                const hasPersistedCustomCss = this.persistedCustomCssByNode[nodeId] !== null
+                const cssTemplate = this.toEditorCss(this.defaultCssTemplate()).trim()
+                const isResetTemplate = (cssState ?? '').trim() === cssTemplate
+                const cssDecl = hasPersistedCustomCss || !isResetTemplate
+                    ? this.fromEditorCss(cssState)
+                    : null
                 this.draftCss = cssState ?? this.draftCss
                 this.previewNodeId = nodeId
                 this.previewCss = cssDecl
