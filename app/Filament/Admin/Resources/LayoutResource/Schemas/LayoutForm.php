@@ -30,6 +30,7 @@ class LayoutForm
                             ->options(Orientation::class)
                             ->default(Orientation::Landscape)
                             ->required()
+                            ->selectablePlaceholder(false)
                             ->live()
                             ->disabledOn('edit'),
                         Select::make('customers')
