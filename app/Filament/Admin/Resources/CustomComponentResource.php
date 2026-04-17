@@ -2,6 +2,7 @@
 
 namespace App\Filament\Admin\Resources;
 
+use App\Filament\Admin\Forms\Components\CustomComponentPreviewField;
 use App\Filament\Admin\Resources\CustomComponentResource\Pages\CreateCustomComponent;
 use App\Filament\Admin\Resources\CustomComponentResource\Pages\EditCustomComponent;
 use App\Filament\Admin\Resources\CustomComponentResource\Pages\ListCustomComponents;
@@ -16,6 +17,8 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Tabs;
+use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
@@ -64,43 +67,61 @@ class CustomComponentResource extends Resource
                         ->required()
                         ->label('Customer'),
                 ]),
-            Section::make('Blade Template')
+            Section::make('Workspace')
                 ->columnSpanFull()
+                ->columns(12)
                 ->schema([
-                    MonacoEditor::make('blade')
-                        ->language('blade')
-                        ->height('280px')
-                        ->columnSpanFull(),
-                ]),
-            Section::make('PHP')
-                ->columnSpanFull()
-                ->schema([
-                    MonacoEditor::make('php')
-                        ->language('php')
-                        ->height('280px')
-                        ->columnSpanFull(),
-                ]),
-            Section::make('SCSS')
-                ->columnSpanFull()
-                ->collapsible()
-                ->schema([
-                    MonacoEditor::make('scss')
-                        ->language('scss')
-                        ->height('280px')
-                        ->helperText('SCSS syntax is validated by the Monaco field for this sprint.')
-                        ->columnSpanFull(),
-                ]),
-            Section::make('JavaScript')
-                ->columnSpanFull()
-                ->collapsible()
-                ->schema([
-                    MonacoEditor::make('js')
-                        ->language('javascript')
-                        ->height('280px')
-                        ->columnSpanFull(),
+                    CustomComponentPreviewField::make('preview')
+                        ->hiddenLabel()
+                        ->columnSpan([
+                            'default' => 12,
+                            'xl' => 8,
+                        ]),
+                    Tabs::make('Code')
+                        ->columnSpan([
+                            'default' => 12,
+                            'xl' => 4,
+                        ])
+                        ->persistTabInQueryString('custom-component-code-tab')
+                        ->tabs([
+                            Tab::make('Blade')
+                                ->schema([
+                                    MonacoEditor::make('blade')
+                                        ->language('html')
+                                        ->height('380px')
+                                        ->live(debounce: 300)
+                                        ->columnSpanFull(),
+                                ]),
+                            Tab::make('PHP')
+                                ->schema([
+                                    MonacoEditor::make('php')
+                                        ->language('php')
+                                        ->height('380px')
+                                        ->live(debounce: 300)
+                                        ->columnSpanFull(),
+                                ]),
+                            Tab::make('JavaScript')
+                                ->schema([
+                                    MonacoEditor::make('js')
+                                        ->language('javascript')
+                                        ->height('380px')
+                                        ->live(debounce: 300)
+                                        ->columnSpanFull(),
+                                ]),
+                            Tab::make('SCSS')
+                                ->schema([
+                                    MonacoEditor::make('scss')
+                                        ->language('scss')
+                                        ->height('380px')
+                                        ->helperText('SCSS is applied directly in preview for rapid feedback.')
+                                        ->live(debounce: 300)
+                                        ->columnSpanFull(),
+                                ]),
+                        ]),
                 ]),
         ]);
     }
+
 
     public static function infolist(Schema $schema): Schema
     {

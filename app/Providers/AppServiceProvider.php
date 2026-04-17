@@ -26,6 +26,7 @@ class AppServiceProvider extends ServiceProvider
             Css::make('layout-builder', resource_path('css/filament/layout-builder.css'))
                 ->loadedOnRequest(),
             AlpineComponent::make('layout-builder', resource_path('js/filament/components/layout-builder.js')),
+            AlpineComponent::make('custom-component-preview', resource_path('js/filament/components/custom-component-preview.js')),
         ]);
     }
 }
