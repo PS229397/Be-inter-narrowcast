@@ -11,6 +11,8 @@ export default function layoutBuilder(config) {
             component: null,
             componentType: null,
             componentConfig: {},
+            customCss: null,
+            customJs: null,
         },
         baseComponents: config.baseComponents ?? [],
         customComponents: config.customComponents ?? [],
@@ -36,10 +38,52 @@ export default function layoutBuilder(config) {
         leafOrderMap: new Map(),
         baseComponentsByKey: new Map(),
         customComponentsByKey: new Map(),
+        customJsCleanups: new Map(),
+        openCustomizeHandler: null,
+        saveCustomizeHandler: null,
+        previewCustomizeHandler: null,
+        previewNodeId: null,
+        previewCss: null,
 
         init() {
             this._initComponentIndexes()
             this._initGrid()
+
+            if (this.openCustomizeHandler) {
+                window.removeEventListener('lb-open-customize', this.openCustomizeHandler)
+            }
+
+            this.openCustomizeHandler = () => {
+                this._dispatchCustomizePayload()
+            }
+
+            window.addEventListener('lb-open-customize', this.openCustomizeHandler)
+
+            if (this.saveCustomizeHandler) {
+                window.removeEventListener('lb-save-customize', this.saveCustomizeHandler)
+            }
+
+            this.saveCustomizeHandler = (event) => {
+                this.saveCustomizeCode(event?.detail ?? {})
+            }
+
+            window.addEventListener('lb-save-customize', this.saveCustomizeHandler)
+
+            if (this.previewCustomizeHandler) {
+                window.removeEventListener(
+                    'lb-preview-customize',
+                    this.previewCustomizeHandler,
+                )
+            }
+
+            this.previewCustomizeHandler = (event) => {
+                this.previewCustomizeCode(event?.detail ?? {})
+            }
+
+            window.addEventListener(
+                'lb-preview-customize',
+                this.previewCustomizeHandler,
+            )
 
             this.$watch('state', (value) => {
                 const normalized = this._normalizeGrid(value)
@@ -62,6 +106,7 @@ export default function layoutBuilder(config) {
             })
 
             this.$nextTick(() => this.renderStructure())
+            this._dispatchCustomizePayload()
         },
 
         stageStyle() {
@@ -187,6 +232,8 @@ export default function layoutBuilder(config) {
                     !Array.isArray(node.componentConfig)
                         ? this._clone(node.componentConfig)
                         : {},
+                customCss: this._normalizeCustomCode(node.customCss),
+                customJs: this._normalizeCustomCode(node.customJs),
             }
 
             if (isRoot) {
@@ -209,9 +256,19 @@ export default function layoutBuilder(config) {
                 normalized.component = null
                 normalized.componentType = null
                 normalized.componentConfig = {}
+                normalized.customCss = null
+                normalized.customJs = null
             }
 
             return normalized
+        },
+
+        _normalizeCustomCode(value) {
+            if (typeof value !== 'string') {
+                return null
+            }
+
+            return value.trim() === '' ? null : value
         },
 
         _normalizeNodeId(id, fallbackId = null) {
@@ -271,6 +328,8 @@ export default function layoutBuilder(config) {
                 component: null,
                 componentType: null,
                 componentConfig: {},
+                customCss: null,
+                customJs: null,
             }
         },
 
@@ -299,16 +358,22 @@ export default function layoutBuilder(config) {
             const inheritedComponent = node.component
             const inheritedComponentType = node.componentType
             const inheritedComponentConfig = this._clone(node.componentConfig ?? {})
+            const inheritedCustomCss = node.customCss ?? null
+            const inheritedCustomJs = node.customJs ?? null
 
             node.direction = direction
             node.split = 50
             node.component = null
             node.componentType = null
             node.componentConfig = {}
+            node.customCss = null
+            node.customJs = null
             node.children = [this._makeNode(), this._makeNode()]
             node.children[0].component = inheritedComponent
             node.children[0].componentType = inheritedComponentType
             node.children[0].componentConfig = inheritedComponentConfig
+            node.children[0].customCss = inheritedCustomCss
+            node.children[0].customJs = inheritedCustomJs
             this.selectedId = node.children[0].id
 
             this._rebuildGridIndexes()
@@ -337,6 +402,8 @@ export default function layoutBuilder(config) {
                 parent.component = survivor.component
                 parent.componentType = survivor.componentType
                 parent.componentConfig = this._clone(survivor.componentConfig ?? {})
+                parent.customCss = survivor.customCss ?? null
+                parent.customJs = survivor.customJs ?? null
                 parent.children = survivor.children
             }
 
@@ -432,6 +499,129 @@ export default function layoutBuilder(config) {
             return node !== null && (node.children ?? []).length === 0
         },
 
+        saveCustomizeCode(payload = {}) {
+            const targetId =
+                typeof payload.nodeId === 'string' && payload.nodeId !== ''
+                    ? payload.nodeId
+                    : this.selectedId
+
+            if (!targetId) {
+                return
+            }
+
+            const node = this.findNode(this.grid, targetId)
+
+            if (!node || (node.children ?? []).length > 0) {
+                return
+            }
+
+            node.customCss = this._normalizeCustomCode(payload.css)
+            node.customJs = this._normalizeCustomCode(payload.js)
+
+            if (this.previewNodeId === targetId) {
+                this.previewNodeId = null
+                this.previewCss = null
+            }
+
+            this.selectedId = targetId
+            this._save()
+            this.renderStructure()
+            this._dispatchCustomizePayload(node)
+        },
+
+        previewCustomizeCode(payload = {}) {
+            const previousPreviewNodeId = this.previewNodeId
+            const nextPreviewNodeId =
+                typeof payload.nodeId === 'string' && payload.nodeId !== ''
+                    ? payload.nodeId
+                    : null
+            const nextPreviewCss = this._normalizeCustomCode(payload.css)
+
+            this.previewNodeId = nextPreviewNodeId
+            this.previewCss = nextPreviewCss
+
+            if (previousPreviewNodeId && previousPreviewNodeId !== nextPreviewNodeId) {
+                const previousNode = this.nodesById.get(previousPreviewNodeId)
+                const previousEl = this.elementsById.get(previousPreviewNodeId)
+
+                if (previousNode && previousEl) {
+                    this._applyCustomCss(previousNode, previousEl)
+                }
+            }
+
+            if (!nextPreviewNodeId) {
+                return
+            }
+
+            const node = this.nodesById.get(nextPreviewNodeId)
+            const el = this.elementsById.get(nextPreviewNodeId)
+
+            if (!node || !el || (node.children ?? []).length > 0) {
+                return
+            }
+
+            this._applyPreviewCssToElement(node, el)
+        },
+
+        _dispatchCustomizePayload(node = this.selectedNode()) {
+            const isLeaf = node !== null && (node.children ?? []).length === 0
+            const computedCssPreset =
+                isLeaf && !(node.customCss ?? '').trim()
+                    ? this._buildComputedCssPreset(node.id)
+                    : ''
+
+            window.dispatchEvent(
+                new CustomEvent('lb-load-customize', {
+                    detail: {
+                        nodeId: isLeaf ? node.id : null,
+                        css: isLeaf ? node.customCss ?? computedCssPreset : '',
+                        js: isLeaf ? node.customJs ?? '' : '',
+                    },
+                }),
+            )
+        },
+
+        _buildComputedCssPreset(nodeId) {
+            const node = this.nodesById.get(nodeId)
+            const el = this.elementsById.get(nodeId)
+
+            if (!node || !el) {
+                return ''
+            }
+
+            const isPreviewingNode =
+                this.previewNodeId === nodeId &&
+                typeof this.previewCss === 'string' &&
+                this.previewCss.trim() !== ''
+
+            // Read computed defaults from persisted state, not transient preview state.
+            this._applyCustomCss(node, el)
+            const styles = getComputedStyle(el)
+            const properties = [
+                'background-color',
+                'background-image',
+                'background-size',
+                'background-position',
+                'background-repeat',
+                'color',
+                'opacity',
+                'border-radius',
+                'padding',
+                'margin',
+                'box-shadow',
+            ]
+
+            const declarations = properties
+                .map((property) => `${property}: ${styles.getPropertyValue(property).trim()};`)
+                .filter((declaration) => !declaration.endsWith(': ;'))
+
+            if (isPreviewingNode) {
+                el.setAttribute('style', this.previewCss)
+            }
+
+            return declarations.join('\n')
+        },
+
         fmtPill(wPct, hPct) {
             const real = this.realSizes[this.orientation] ?? this.realSizes.landscape
 
@@ -490,6 +680,7 @@ export default function layoutBuilder(config) {
         selectNode(nodeId) {
             this.selectedId = nodeId
             this.renderSelection()
+            this._dispatchCustomizePayload()
         },
 
         clearSelection() {
@@ -499,6 +690,7 @@ export default function layoutBuilder(config) {
 
             this.selectedId = null
             this.renderSelection()
+            this._dispatchCustomizePayload()
         },
 
         renderStructure() {
@@ -507,6 +699,8 @@ export default function layoutBuilder(config) {
             if (!container || !this.grid) {
                 return
             }
+
+            this._cleanupAllCustomJs()
 
             this._initComponentIndexes()
             this.leafOrderMap = this.leafOrder(this.grid)
@@ -525,8 +719,84 @@ export default function layoutBuilder(config) {
             rootEl.style.inset = '0'
             container.appendChild(rootEl)
 
+            this._applyCustomCode()
             this.updateAllPills()
             this.renderSelection()
+        },
+
+        _applyCustomCode() {
+            for (const [nodeId, el] of this.elementsById) {
+                const node = this.nodesById.get(nodeId)
+
+                if (!node || (node.children ?? []).length > 0) {
+                    continue
+                }
+
+                this._applyCustomCss(node, el)
+                this._applyPreviewCssToElement(node, el)
+                this._runNodeCustomJs(node, el)
+            }
+        },
+
+        _applyCustomCss(node, el) {
+            const css = this._normalizeCustomCode(node.customCss)
+
+            if (!css) {
+                el.removeAttribute('style')
+
+                return
+            }
+
+            el.setAttribute('style', css)
+        },
+
+        _runNodeCustomJs(node, el) {
+            const js = this._normalizeCustomCode(node.customJs)
+
+            if (!js) {
+                return
+            }
+
+            try {
+                const runner = new Function('el', 'node', 'builder', js)
+                const cleanup = runner(el, node, this)
+
+                if (typeof cleanup === 'function') {
+                    this.customJsCleanups.set(node.id, cleanup)
+                }
+            } catch (error) {
+                console.error(`Custom JS error for node ${node.id}`, error)
+            }
+        },
+
+        _applyPreviewCssToElement(node, el) {
+            if (this.previewNodeId !== node.id) {
+                return
+            }
+
+            if (!this.previewCss) {
+                this._applyCustomCss(node, el)
+
+                return
+            }
+
+            el.setAttribute('style', this.previewCss)
+        },
+
+        _cleanupAllCustomJs() {
+            for (const cleanup of this.customJsCleanups.values()) {
+                if (typeof cleanup !== 'function') {
+                    continue
+                }
+
+                try {
+                    cleanup()
+                } catch (error) {
+                    console.error('Custom JS cleanup failed', error)
+                }
+            }
+
+            this.customJsCleanups.clear()
         },
 
         renderSelection() {
@@ -725,6 +995,13 @@ export default function layoutBuilder(config) {
                 el.classList.toggle('lb-node--bl', corners.bottomLeft)
 
                 this._renderLeafCenter(el, node, order)
+
+                if (node.customCss || node.customJs) {
+                    const codeBadge = document.createElement('div')
+                    codeBadge.className = 'lb-node-code-badge'
+                    codeBadge.textContent = '</>'
+                    el.appendChild(codeBadge)
+                }
 
                 const pill = document.createElement('div')
                 pill.dataset.pctLabel = ''

@@ -107,6 +107,7 @@
         let currentIndex = 0;
         let playTimer    = null;
         let pollTimer    = null;
+        const customJsCleanups = new Map();
 
         const canvas   = document.getElementById('display-canvas');
         const fallback = document.getElementById('fallback');
@@ -115,7 +116,42 @@
         //  Slide rendering
         // ------------------------------------------------------------------ //
 
-        function renderGrid(node, containerEl) {
+        function normalizeCustomCode(value) {
+            return typeof value === 'string' && value.trim() !== '' ? value : null;
+        }
+
+        function runNodeCustomJs(node, el, key) {
+            const js = normalizeCustomCode(node?.customJs);
+
+            if (!js) return;
+
+            try {
+                const runner = new Function('el', 'node', 'builder', js);
+                const cleanup = runner(el, node, null);
+
+                if (typeof cleanup === 'function') {
+                    customJsCleanups.set(key, cleanup);
+                }
+            } catch (error) {
+                console.error(`Custom JS error for node ${node?.id ?? key}`, error);
+            }
+        }
+
+        function cleanupAllCustomJs() {
+            customJsCleanups.forEach((cleanup) => {
+                if (typeof cleanup !== 'function') return;
+
+                try {
+                    cleanup();
+                } catch (error) {
+                    console.error('Custom JS cleanup failed', error);
+                }
+            });
+
+            customJsCleanups.clear();
+        }
+
+        function renderGrid(node, containerEl, frameIndex) {
             const el = document.createElement('div');
             el.classList.add('grid-node');
             el.dataset.nodeId = node.id;
@@ -128,10 +164,17 @@
                 contentEl.classList.add('grid-node-content');
                 renderNodeContent(node, contentEl, currentSlideContent());
                 el.appendChild(contentEl);
+
+                const customCss = normalizeCustomCode(node.customCss);
+                if (customCss) {
+                    el.style.cssText += `;${customCss}`;
+                }
+
+                runNodeCustomJs(node, el, `${frameIndex}:${node.id}`);
             } else {
                 el.style.display        = 'flex';
                 el.style.flexDirection  = detectSplitDirection(node.children) === 'horizontal' ? 'row' : 'column';
-                node.children.forEach(child => renderGrid(child, el));
+                node.children.forEach(child => renderGrid(child, el, frameIndex));
             }
 
             containerEl.appendChild(el);
@@ -194,7 +237,7 @@
             const grid = slide.layout?.grid;
 
             if (grid) {
-                renderGrid(grid, frame);
+                renderGrid(grid, frame, index);
             }
 
             return frame;
@@ -256,10 +299,12 @@
             if (!newSlides.length) {
                 fallback.classList.add('visible');
                 clearTimeout(playTimer);
+                cleanupAllCustomJs();
                 return;
             }
 
             // Rebuild frames
+            cleanupAllCustomJs();
             document.querySelectorAll('.slide-frame').forEach(f => f.remove());
             newSlides.forEach((slide, i) => {
                 canvas.appendChild(buildSlideFrame(slide, i));

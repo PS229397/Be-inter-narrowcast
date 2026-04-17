@@ -6,6 +6,13 @@
         x-data="{
             activeTab: 'base',
             panelMode: 'components',
+            draftCss: '',
+            draftJs: '',
+            activeCustomizeNodeId: null,
+            previewNodeId: null,
+            previewCss: null,
+            previewIntervalId: null,
+            editorVersion: 0,
             customSearch: '',
             customPage: 1,
             customPageSize: 6,
@@ -34,8 +41,213 @@
             resetCustomPaging() {
                 this.customPage = 1
             },
+            selectedLeafNodeIdFromDom() {
+                return document.querySelector('.lb-grid .lb-node--leaf.is-selected')?.dataset?.nodeId ?? null
+            },
+            defaultCssTemplate() {
+                return [
+                    'background-color: transparent;',
+                    'background-image: none;',
+                    'background-size: auto;',
+                    'background-position: 0% 0%;',
+                    'background-repeat: repeat;',
+                ].join('\n')
+            },
+            toEditorCss(declarations) {
+                const raw = (declarations ?? '').trim()
+                return raw || this.defaultCssTemplate()
+            },
+            fromEditorCss(value) {
+                const raw = (value ?? '').trim()
+                if (!raw) return null
+
+                const start = raw.indexOf('{')
+                const end = raw.lastIndexOf('}')
+
+                if (start === -1 || end === -1 || end <= start) {
+                    return raw
+                }
+
+                const inner = raw.slice(start + 1, end)
+                    .split('\n')
+                    .map((line) => line.trim())
+                    .filter((line) => line.length > 0)
+                    .join('\n')
+
+                return inner || null
+            },
+            editorElementId(refName) {
+                if (refName === 'cssEditor') {
+                    return 'lb-css-editor-' + this.editorVersion
+                }
+
+                return 'lb-js-editor-' + this.editorVersion
+            },
+            resolveEditorRef(refName) {
+                const editorById = document.getElementById(this.editorElementId(refName))
+                if (editorById) {
+                    return editorById
+                }
+
+                const ref = this.$refs[refName]
+
+                if (Array.isArray(ref)) {
+                    return ref[ref.length - 1] ?? null
+                }
+
+                if (ref) {
+                    return ref
+                }
+                return null
+            },
+            getEditorState(refName, fallback = '') {
+                const ref = this.resolveEditorRef(refName)
+                if (!ref) return fallback
+
+                const editor = Alpine.$data(ref)
+                if (!editor) return fallback
+
+                return editor.state ?? fallback
+            },
+            syncEditorState(refName, value) {
+                const ref = this.resolveEditorRef(refName)
+                if (!ref) return
+
+                const editor = Alpine.$data(ref)
+                if (!editor) return
+
+                editor.shouldUpdateState = true
+                editor.state = value
+            },
+            syncEditorStates() {
+                this.syncEditorState('cssEditor', this.draftCss)
+                this.syncEditorState('jsEditor', this.draftJs)
+            },
+            syncEditorStatesLater() {
+                this.$nextTick(() => {
+                    this.syncEditorStates()
+                    window.setTimeout(() => this.syncEditorStates(), 100)
+                    window.setTimeout(() => this.syncEditorStates(), 260)
+                })
+            },
+            openCustomize() {
+                if (!this.isLeafSelected()) return
+
+                this.activeCustomizeNodeId = this.selectedLeafNodeIdFromDom()
+                this.panelMode = 'customize'
+                this.startPreviewLoop()
+                this.$nextTick(() => {
+                    window.dispatchEvent(new CustomEvent('lb-open-customize'))
+                    window.dispatchEvent(new Event('resize'))
+                })
+                this.syncEditorStatesLater()
+            },
+            saveCustomize() {
+                const nodeId = this.activeCustomizeNodeId ?? this.selectedLeafNodeIdFromDom()
+                if (!nodeId) return
+
+                const cssState = this.getEditorState('cssEditor', this.draftCss)
+                const jsState = this.getEditorState('jsEditor', this.draftJs)
+                this.draftCss = cssState ?? this.draftCss
+                this.draftJs = jsState ?? this.draftJs
+                const jsValue = (jsState ?? '').trim()
+
+                this.stopPreviewLoop()
+                this.clearPreview()
+                window.dispatchEvent(new CustomEvent('lb-save-customize', {
+                    detail: {
+                        nodeId,
+                        css: this.fromEditorCss(cssState),
+                        js: jsValue === '' || jsValue === '// Customize this section' ? null : jsState,
+                    },
+                }))
+
+                this.panelMode = 'components'
+            },
+            deleteCustomize() {
+                const nodeId = this.activeCustomizeNodeId ?? this.selectedLeafNodeIdFromDom()
+                if (!nodeId) return
+
+                this.stopPreviewLoop()
+                this.clearPreview()
+                window.dispatchEvent(new CustomEvent('lb-save-customize', {
+                    detail: { nodeId, css: null, js: null },
+                }))
+
+                this.draftCss = this.toEditorCss(this.defaultCssTemplate())
+                this.draftJs = '// Customize this section'
+                this.syncEditorStatesLater()
+                this.$nextTick(() => this.flushPreview())
+            },
+            cancelCustomize() {
+                this.stopPreviewLoop()
+                this.clearPreview()
+                this.panelMode = 'components'
+            },
+            clearPreview() {
+                window.dispatchEvent(new CustomEvent('lb-preview-customize', {
+                    detail: { nodeId: null, css: null },
+                }))
+                this.previewNodeId = null
+                this.previewCss = null
+            },
+            flushPreview() {
+                if (this.panelMode !== 'customize') return
+
+                const selectedNodeId = this.selectedLeafNodeIdFromDom()
+
+                if (selectedNodeId && selectedNodeId !== this.activeCustomizeNodeId) {
+                    this.activeCustomizeNodeId = selectedNodeId
+                    window.dispatchEvent(new CustomEvent('lb-open-customize'))
+                    return
+                }
+
+                const nodeId = this.activeCustomizeNodeId ?? selectedNodeId
+                if (!nodeId) return
+
+                const cssState = this.getEditorState('cssEditor', this.draftCss)
+                const cssDecl = this.fromEditorCss(cssState)
+
+                if (this.previewNodeId === nodeId && this.previewCss === cssDecl) {
+                    return
+                }
+
+                this.previewNodeId = nodeId
+                this.previewCss = cssDecl
+
+                window.dispatchEvent(new CustomEvent('lb-preview-customize', {
+                    detail: { nodeId, css: cssDecl },
+                }))
+            },
+            startPreviewLoop() {
+                this.stopPreviewLoop()
+                this.flushPreview()
+                this.previewIntervalId = window.setInterval(() => this.flushPreview(), 180)
+            },
+            stopPreviewLoop() {
+                if (this.previewIntervalId !== null) {
+                    window.clearInterval(this.previewIntervalId)
+                    this.previewIntervalId = null
+                }
+            },
         }"
-        x-effect="if (panelMode === 'customize') { $nextTick(() => window.dispatchEvent(new Event('resize'))) }"
+        x-on:lb-load-customize.window="
+            const cssFromEvent = ($event.detail.css ?? '').trim()
+            const jsFromEvent = ($event.detail.js ?? '').trim()
+            activeCustomizeNodeId = $event.detail.nodeId ?? null
+            draftCss = toEditorCss(cssFromEvent || defaultCssTemplate())
+            draftJs = jsFromEvent || '// Customize this section'
+            previewNodeId = null
+            previewCss = null
+            editorVersion++
+            syncEditorStatesLater()
+            if (panelMode === 'customize') {
+                $nextTick(() => {
+                    flushPreview()
+                    window.dispatchEvent(new Event('resize'))
+                })
+            }
+        "
         class="lb-panel-scroll flex h-full min-h-0 flex-1 flex-col gap-4 overflow-visible"
     >
         <x-layout-builder.card subtle class="lb-panel-card flex h-full min-h-0 flex-1 flex-col overflow-hidden">
@@ -71,7 +283,7 @@
             >
                 <button
                     type="button"
-                    x-on:click="window.dispatchEvent(new CustomEvent('lb-customize-reset')); panelMode = 'components'"
+                    x-on:click="cancelCustomize()"
                     class="lb-tab-button h-[2.45rem] w-[2.45rem] shrink-0 rounded-full px-0 py-0"
                 >
                     <svg class="h-3.5 w-3.5" viewBox="0 0 16 16" fill="none">
@@ -163,24 +375,27 @@
                             data-lb-editor="css"
                             class="min-h-[12rem] flex-1 overflow-hidden rounded-[0.75rem] border border-[var(--lb-border-soft)] bg-[var(--lb-surface-muted)]"
                         >
-                            <div
-                                x-load
-                                x-load-css="[@js(\Filament\Support\Facades\FilamentAsset::getStyleHref('monaco-editor-css', package: 'timo-de-winter/filament-monaco-editor'))]"
-                                x-load-src="{{ \Filament\Support\Facades\FilamentAsset::getAlpineComponentSrc('monaco-editor', package: 'timo-de-winter/filament-monaco-editor') }}"
-                                x-data="monacoEditor({
-                                    key: 'layout-builder-custom-css',
-                                    isLiveDebounced: false,
-                                    isLiveOnBlur: false,
-                                    liveDebounce: null,
-                                    state: '',
-                                    language: 'css',
-                                })"
-                                x-on:lb-customize-reset.window="state = ''"
-                                wire:ignore
-                                class="h-full min-h-0"
-                            >
-                                <div id="monaco-editor" class="h-full"></div>
-                            </div>
+                            <template x-for="instance in [editorVersion]" :key="'css-' + instance + '-' + (activeCustomizeNodeId || 'none')">
+                                <div
+                                    x-load
+                                    x-load-css="[@js(\Filament\Support\Facades\FilamentAsset::getStyleHref('monaco-editor-css', package: 'timo-de-winter/filament-monaco-editor'))]"
+                                    x-load-src="{{ \Filament\Support\Facades\FilamentAsset::getAlpineComponentSrc('monaco-editor', package: 'timo-de-winter/filament-monaco-editor') }}"
+                                    x-ref="cssEditor"
+                                    x-bind:id="editorElementId('cssEditor')"
+                                    x-data="monacoEditor({
+                                        key: 'layout-builder-custom-css-' + (activeCustomizeNodeId || 'none') + '-' + instance,
+                                        isLiveDebounced: false,
+                                        isLiveOnBlur: false,
+                                        liveDebounce: null,
+                                        state: draftCss || toEditorCss(defaultCssTemplate()),
+                                        language: 'css',
+                                    })"
+                                    wire:ignore
+                                    class="h-full min-h-0"
+                                >
+                                    <div id="monaco-editor" class="h-full"></div>
+                                </div>
+                            </template>
                         </div>
                     </div>
 
@@ -190,24 +405,27 @@
                             data-lb-editor="js"
                             class="min-h-[12rem] flex-1 overflow-hidden rounded-[0.75rem] border border-[var(--lb-border-soft)] bg-[var(--lb-surface-muted)]"
                         >
-                            <div
-                                x-load
-                                x-load-css="[@js(\Filament\Support\Facades\FilamentAsset::getStyleHref('monaco-editor-css', package: 'timo-de-winter/filament-monaco-editor'))]"
-                                x-load-src="{{ \Filament\Support\Facades\FilamentAsset::getAlpineComponentSrc('monaco-editor', package: 'timo-de-winter/filament-monaco-editor') }}"
-                                x-data="monacoEditor({
-                                    key: 'layout-builder-custom-js',
-                                    isLiveDebounced: false,
-                                    isLiveOnBlur: false,
-                                    liveDebounce: null,
-                                    state: '',
-                                    language: 'javascript',
-                                })"
-                                x-on:lb-customize-reset.window="state = ''"
-                                wire:ignore
-                                class="h-full min-h-0"
-                            >
-                                <div id="monaco-editor" class="h-full"></div>
-                            </div>
+                            <template x-for="instance in [editorVersion]" :key="'js-' + instance + '-' + (activeCustomizeNodeId || 'none')">
+                                <div
+                                    x-load
+                                    x-load-css="[@js(\Filament\Support\Facades\FilamentAsset::getStyleHref('monaco-editor-css', package: 'timo-de-winter/filament-monaco-editor'))]"
+                                    x-load-src="{{ \Filament\Support\Facades\FilamentAsset::getAlpineComponentSrc('monaco-editor', package: 'timo-de-winter/filament-monaco-editor') }}"
+                                    x-ref="jsEditor"
+                                    x-bind:id="editorElementId('jsEditor')"
+                                    x-data="monacoEditor({
+                                        key: 'layout-builder-custom-js-' + (activeCustomizeNodeId || 'none') + '-' + instance,
+                                        isLiveDebounced: false,
+                                        isLiveOnBlur: false,
+                                        liveDebounce: null,
+                                        state: draftJs || '// Customize this section',
+                                        language: 'javascript',
+                                    })"
+                                    wire:ignore
+                                    class="h-full min-h-0"
+                                >
+                                    <div id="monaco-editor" class="h-full"></div>
+                                </div>
+                            </template>
                         </div>
                     </div>
 
@@ -258,7 +476,9 @@
                     style="height: 15px;"
                 ></div>
                 <x-layout-builder.tab-button
-                    x-on:click="panelMode = 'customize'"
+                    x-on:click="openCustomize()"
+                    x-bind:disabled="!isLeafSelected()"
+                    x-bind:class="{ 'opacity-50 cursor-not-allowed': !isLeafSelected() }"
                     class="w-full"
                 >
                     <svg class="h-4 w-4" viewBox="0 0 20 20" fill="none">
@@ -275,7 +495,10 @@
                 x-show="panelMode === 'customize'"
                 class="flex gap-2 border-t border-[var(--lb-border-soft)] p-3"
             >
-                <x-layout-builder.tab-button class="w-full">
+                <x-layout-builder.tab-button x-on:click="deleteCustomize()" class="w-full">
+                    Delete code
+                </x-layout-builder.tab-button>
+                <x-layout-builder.tab-button x-on:click="saveCustomize()" class="w-full">
                     Save
                 </x-layout-builder.tab-button>
             </div>

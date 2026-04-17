@@ -22,6 +22,8 @@ class LayoutGrid
             'component' => null,
             'componentType' => null,
             'componentConfig' => [],
+            'customCss' => null,
+            'customJs' => null,
         ];
     }
 
@@ -127,6 +129,8 @@ class LayoutGrid
     {
         $component = static::normalizeComponentKey($node['component'] ?? null);
         $componentConfig = is_array($node['componentConfig'] ?? null) ? $node['componentConfig'] : [];
+        $customCss = static::normalizeCustomCode($node['customCss'] ?? null);
+        $customJs = static::normalizeCustomCode($node['customJs'] ?? null);
 
         $normalized = [
             'id' => $isRoot ? 'root' : static::normalizeNodeId($node['id'] ?? null, $counter),
@@ -136,6 +140,8 @@ class LayoutGrid
             'component' => $component,
             'componentType' => LayoutComponentCatalog::resolveType($component),
             'componentConfig' => $componentConfig,
+            'customCss' => $customCss,
+            'customJs' => $customJs,
         ];
 
         if ($isRoot) {
@@ -160,6 +166,8 @@ class LayoutGrid
             $normalized['component'] = null;
             $normalized['componentType'] = null;
             $normalized['componentConfig'] = [];
+            $normalized['customCss'] = null;
+            $normalized['customJs'] = null;
         }
 
         return $normalized;
@@ -213,6 +221,14 @@ class LayoutGrid
             $errors[] = "Node [{$path}] must use an object-like component configuration payload.";
         }
 
+        if (($node['customCss'] ?? null) !== null && ! is_string($node['customCss'])) {
+            $errors[] = "Node [{$path}] customCss must be a string or null.";
+        }
+
+        if (($node['customJs'] ?? null) !== null && ! is_string($node['customJs'])) {
+            $errors[] = "Node [{$path}] customJs must be a string or null.";
+        }
+
         foreach ($children as $index => $child) {
             if (! is_array($child) || array_is_list($child)) {
                 $errors[] = "Node [{$path}.children.{$index}] must be an object.";
@@ -229,6 +245,15 @@ class LayoutGrid
     protected static function normalizeComponentKey(mixed $component): ?string
     {
         return is_string($component) && $component !== '' ? $component : null;
+    }
+
+    protected static function normalizeCustomCode(mixed $value): ?string
+    {
+        if (! is_string($value)) {
+            return null;
+        }
+
+        return trim($value) !== '' ? $value : null;
     }
 
     protected static function normalizeNodeId(mixed $id, int &$counter): string
