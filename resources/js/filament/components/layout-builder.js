@@ -271,6 +271,132 @@ export default function layoutBuilder(config) {
             return value.trim() === '' ? null : value
         },
 
+        _defaultCustomizeCssTemplate() {
+            return [
+                'background-color: transparent;',
+                'background-image: none;',
+                'background-size: auto;',
+                'background-position: 0% 0%;',
+                'background-repeat: repeat;',
+            ].join('\n')
+        },
+
+        _extractCssDeclarations(css) {
+            const raw = this._normalizeCustomCode(css)
+            if (!raw) {
+                return null
+            }
+
+            const start = raw.indexOf('{')
+            const end = raw.lastIndexOf('}')
+
+            if (start === -1 || end === -1 || end <= start) {
+                return raw
+            }
+
+            const inner = raw
+                .slice(start + 1, end)
+                .split('\n')
+                .map((line) => line.trim())
+                .filter((line) => line.length > 0)
+                .join('\n')
+
+            return inner || null
+        },
+
+        _canonicalizeCssDeclarations(css) {
+            const declarations = this._extractCssDeclarations(css)
+            if (!declarations) {
+                return null
+            }
+
+            const normalizedLines = declarations
+                .split('\n')
+                .map((line) => line.trim().toLowerCase())
+                .filter((line) => line.length > 0)
+                .map((line) => line.replace(/\s+/g, ' '))
+                .map((line) => line.replace(/\s*:\s*/g, ': '))
+                .map((line) => (line.endsWith(';') ? line : `${line};`))
+                .sort()
+
+            return normalizedLines.join('\n')
+        },
+
+        _hasMeaningfulCustomCss(css) {
+            const normalized = this._canonicalizeCssDeclarations(css)
+            if (!normalized) {
+                return false
+            }
+
+            const template = this._canonicalizeCssDeclarations(
+                this._defaultCustomizeCssTemplate(),
+            )
+
+            return normalized !== template
+        },
+
+        _hasMeaningfulCustomJs(js) {
+            const normalized = this._normalizeCustomCode(js)
+            if (!normalized) {
+                return false
+            }
+
+            return normalized.trim() !== '// Customize this section'
+        },
+
+        _nodeHasCustomCode(node) {
+            if (!node || (node.children ?? []).length > 0) {
+                return false
+            }
+
+            const hasSavedCustomCss = this._hasMeaningfulCustomCss(node.customCss)
+            const hasSavedCustomJs = this._hasMeaningfulCustomJs(node.customJs)
+            const hasPreviewCustomCss =
+                this.previewNodeId === node.id &&
+                this._hasMeaningfulCustomCss(this.previewCss)
+
+            return hasSavedCustomCss || hasSavedCustomJs || hasPreviewCustomCss
+        },
+
+        _createCodeIndicatorElement() {
+            const badge = document.createElement('div')
+            badge.className = 'lb-node-code-indicator'
+
+            const icon = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
+            icon.setAttribute('class', 'lb-node-code-icon')
+            icon.setAttribute('viewBox', '0 0 20 20')
+            icon.setAttribute('fill', 'none')
+            icon.setAttribute('aria-hidden', 'true')
+
+            const left = document.createElementNS('http://www.w3.org/2000/svg', 'path')
+            left.setAttribute('d', 'M7 7L3 10L7 13')
+            left.setAttribute('stroke', 'currentColor')
+            left.setAttribute('stroke-width', '1.5')
+            left.setAttribute('stroke-linecap', 'round')
+            left.setAttribute('stroke-linejoin', 'round')
+
+            const right = document.createElementNS('http://www.w3.org/2000/svg', 'path')
+            right.setAttribute('d', 'M13 7L17 10L13 13')
+            right.setAttribute('stroke', 'currentColor')
+            right.setAttribute('stroke-width', '1.5')
+            right.setAttribute('stroke-linecap', 'round')
+            right.setAttribute('stroke-linejoin', 'round')
+
+            const slash = document.createElementNS('http://www.w3.org/2000/svg', 'path')
+            slash.setAttribute('d', 'M11 5L9 15')
+            slash.setAttribute('stroke', 'currentColor')
+            slash.setAttribute('stroke-width', '1.5')
+            slash.setAttribute('stroke-linecap', 'round')
+            slash.setAttribute('stroke-linejoin', 'round')
+
+            icon.appendChild(left)
+            icon.appendChild(right)
+            icon.appendChild(slash)
+            badge.appendChild(icon)
+
+            return badge
+        },
+
         _normalizeNodeId(id, fallbackId = null) {
             if (typeof id === 'string' && id !== '' && id !== 'root') {
                 return id
@@ -546,6 +672,7 @@ export default function layoutBuilder(config) {
 
                 if (previousNode && previousEl) {
                     this._applyCustomCss(previousNode, previousEl)
+                    this._syncNodeCodeBadge(previousNode, previousEl)
                 }
             }
 
@@ -561,6 +688,7 @@ export default function layoutBuilder(config) {
             }
 
             this._applyPreviewCssToElement(node, el)
+            this._syncNodeCodeBadge(node, el)
         },
 
         _dispatchCustomizePayload(node = this.selectedNode()) {
@@ -740,7 +868,45 @@ export default function layoutBuilder(config) {
                 this._applyCustomCss(node, el)
                 this._applyPreviewCssToElement(node, el)
                 this._runNodeCustomJs(node, el)
+                this._syncNodeCodeBadge(node, el)
             }
+        },
+
+        _syncNodeCodeBadge(node, el) {
+            const center = el.querySelector('[data-node-center]')
+            if (!center) {
+                return
+            }
+
+            // Cleanup any legacy badge nodes that were previously mounted
+            // directly on the leaf element.
+            for (const child of Array.from(el.children)) {
+                if (child.classList?.contains('lb-node-code-badge')) {
+                    child.remove()
+                }
+            }
+
+            const hasCustomCode = this._nodeHasCustomCode(node)
+
+            center.classList.toggle('lb-node-center--with-code', hasCustomCode)
+
+            let badge = center.querySelector('.lb-node-code-indicator')
+
+            if (!hasCustomCode) {
+                if (badge) {
+                    badge.remove()
+                }
+
+                return
+            }
+
+            if (!badge) {
+                badge = this._createCodeIndicatorElement()
+            }
+
+            // Keep code indicator as the last center child so it renders beneath
+            // the primary icon/number/label stack.
+            center.appendChild(badge)
         },
 
         _applyCustomCss(node, el) {
@@ -849,11 +1015,21 @@ export default function layoutBuilder(config) {
                     center.appendChild(labelEl)
                 }
 
+                if (this._nodeHasCustomCode(node)) {
+                    center.classList.add('lb-node-center--with-code')
+                    center.appendChild(this._createCodeIndicatorElement())
+                }
+
                 return
             }
 
             center.classList.add('lb-node-number')
             center.textContent = order.get(node.id) ?? ''
+
+            if (this._nodeHasCustomCode(node)) {
+                center.classList.add('lb-node-center--with-code')
+                center.appendChild(this._createCodeIndicatorElement())
+            }
         },
 
         buildEl(
@@ -1000,13 +1176,6 @@ export default function layoutBuilder(config) {
                 el.classList.toggle('lb-node--bl', corners.bottomLeft)
 
                 this._renderLeafCenter(el, node, order)
-
-                if (node.customCss || node.customJs) {
-                    const codeBadge = document.createElement('div')
-                    codeBadge.className = 'lb-node-code-badge'
-                    codeBadge.textContent = '</>'
-                    el.appendChild(codeBadge)
-                }
 
                 const pill = document.createElement('div')
                 pill.dataset.pctLabel = ''

@@ -324,6 +324,11 @@
     gap: 8px;
 }
 
+.lb-node-center--with-code {
+    flex-direction: row;
+    gap: 0;
+}
+
 .lb-node-icon {
     width: 56px;
     height: 56px;
@@ -369,23 +374,44 @@
     white-space: nowrap;
 }
 
-.lb-node-code-badge {
+.lb-node-code-indicator {
     position: absolute;
-    top: 6px;
-    right: 6px;
-    z-index: 5;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, 28px);
+    z-index: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
     pointer-events: none;
     user-select: none;
-    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-    font-size: 10px;
-    line-height: 1;
-    font-weight: 700;
-    letter-spacing: 0.01em;
-    color: var(--lb-accent-strong);
-    background: color-mix(in oklab, var(--lb-accent) 12%, var(--lb-surface));
-    border: 1px solid var(--lb-accent-border);
-    border-radius: 999px;
-    padding: 3px 6px;
+    color: var(--lb-node-icon);
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    padding: 0;
+    margin-top: 0;
+    opacity: 0.92;
+}
+
+.lb-node-code-icon {
+    width: 24px;
+    height: 24px;
+    display: block;
+}
+
+.lb-node-code-icon path {
+    stroke: currentColor;
+    stroke-width: 1.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+/* Hide any legacy text/pill badge path from previous iterations. */
+.lb-node-code-badge {
+    display: none !important;
 }
 
 .lb-tab-button:hover,
