@@ -341,7 +341,9 @@ export default function layoutBuilder(config) {
                 return false
             }
 
-            return normalized.trim() !== '// Customize this section'
+            // Normalize whitespace so Monaco's compacted readback
+            // ("//Customizethissection") still matches the placeholder.
+            return normalized.trim().replace(/\s+/g, ' ') !== '// Customize this section'
         },
 
         _nodeHasCustomCode(node) {

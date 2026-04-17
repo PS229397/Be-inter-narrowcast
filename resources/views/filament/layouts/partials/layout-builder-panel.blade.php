@@ -149,15 +149,20 @@
                 const ref = this.resolveEditorRef(refName)
                 if (!ref) return fallback
 
+                const editor = Alpine.$data(ref)
+
+                // When a sync is pending, Monaco's DOM is stale and editor.state
+                // holds the authoritative new value — prefer it over DOM readback.
+                if (editor?.shouldUpdateState) {
+                    return editor.state ?? fallback
+                }
+
                 const domValue = this.readMonacoDomValue(ref)
                 if (domValue !== null) {
                     return domValue
                 }
 
-                const editor = Alpine.$data(ref)
-                if (!editor) return fallback
-
-                return editor.state ?? fallback
+                return editor?.state ?? fallback
             },
             applyNodeStyle(nodeId, cssDecl) {
                 if (!nodeId) return
@@ -221,7 +226,11 @@
                 ).trim()
                 const normalizedState = (cssState ?? '').trim()
 
-                if (normalizedState === baselineCss) {
+                // Monaco DOM strips spaces from tokens, while toEditorCss adds
+                // indentation — strip all whitespace before comparing so stale
+                // Monaco DOM output still matches the formatted baseline.
+                const stripWs = (s) => s.replace(/\s+/g, '')
+                if (stripWs(normalizedState) === stripWs(baselineCss)) {
                     return null
                 }
 
@@ -256,6 +265,9 @@
                 this.draftCss = cssState ?? this.draftCss
                 this.draftJs = jsState ?? this.draftJs
                 const jsValue = (jsState ?? '').trim()
+                // Normalize whitespace so Monaco's compacted DOM readback
+                // (e.g. '//Customizethissection') still matches the placeholder.
+                const jsValueNorm = jsValue.replace(/\s+/g, ' ')
 
                 this.stopPreviewLoop()
                 this.clearPreview()
@@ -263,7 +275,7 @@
                     detail: {
                         nodeId,
                         css: this.resolveCssDeclForNode(nodeId, cssState),
-                        js: jsValue === '' || jsValue === '// Customize this section' ? null : jsState,
+                        js: jsValue === '' || jsValueNorm === '// Customize this section' ? null : jsState,
                     },
                 }))
 
